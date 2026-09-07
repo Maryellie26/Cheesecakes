@@ -90,7 +90,7 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             <span class="nav-brand-name">Cheesecake Delight</span>
         </a>
         <nav class="nav-links">
-            <a href="#home" class="nav-item">HOME</a>
+            <a href="#home" class="nav-item">OMME</a>
             <a href="#about" class="nav-item">ABOUT US</a>
             <a href="#menu" class="nav-item">MENU</a>
             <a href="#reviews" class="nav-item">REVIEWS</a>
