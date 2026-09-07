@@ -1,5 +1,33 @@
 <?php
 session_start();
+require_once 'db.php';
+
+// Handle Contact Form Submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_message'])) {
+    $name    = trim($_POST['name'] ?? '');
+    $email   = trim($_POST['email'] ?? '');
+    $message = trim($_POST['message'] ?? '');
+
+    if (!empty($name) && !empty($email) && !empty($message)) {
+        $stmt = $conn->prepare("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("sss", $name, $email, $message);
+            if ($stmt->execute()) {
+                $_SESSION['msg_status'] = 'success';
+            } else {
+                $_SESSION['msg_status'] = 'error';
+            }
+            $stmt->close();
+        } else {
+            $_SESSION['msg_status'] = 'error';
+        }
+    } else {
+        $_SESSION['msg_status'] = 'empty';
+    }
+
+    header("Location: Index.php#contact");
+    exit;
+}
 
 $menu_items = [
     [
@@ -81,6 +109,28 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+    <style>
+        .form-feedback {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-feedback.success {
+            background-color: #e6f9ed;
+            color: #1b873f;
+            border: 1.5px solid #a3e9be;
+        }
+        .form-feedback.error {
+            background-color: #ffe8ec;
+            color: #d13d60;
+            border: 1.5px solid #f7b4c4;
+        }
+    </style>
 </head>
 <body>
 
@@ -190,12 +240,10 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             <span class="item-price">&#8369;<?php echo htmlspecialchars($item['price']); ?></span>
 
                             <div class="action-controls-wrap">
-                                <!-- No-JS Stepper Pill Box -->
                                 <div class="nojs-stepper-box">
                                     <input type="number" name="quantity" value="1" min="1" max="99" class="nojs-qty-input">
                                 </div>
 
-                                <!-- Add to Cart Pill Button -->
                                 <button type="submit" class="add-cart-pill-btn">
                                     Add <i class="fa-solid fa-cart-shopping"></i>
                                 </button>
@@ -334,7 +382,25 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             <i class="fa-regular fa-envelope form-icon"></i>
                             <h3 class="form-title">Send Us a Message</h3>
                         </div>
-                        <form onsubmit="return false;" class="message-form">
+
+                        <?php if (isset($_SESSION['msg_status'])): ?>
+                            <?php if ($_SESSION['msg_status'] === 'success'): ?>
+                                <div class="form-feedback success">
+                                    <i class="fa-solid fa-circle-check"></i> Thank you! Your message has been sent successfully.
+                                </div>
+                            <?php elseif ($_SESSION['msg_status'] === 'error'): ?>
+                                <div class="form-feedback error">
+                                    <i class="fa-solid fa-circle-exclamation"></i> Unable to save message. Please try again.
+                                </div>
+                            <?php else: ?>
+                                <div class="form-feedback error">
+                                    <i class="fa-solid fa-circle-exclamation"></i> Please fill in all fields.
+                                </div>
+                            <?php endif; ?>
+                            <?php unset($_SESSION['msg_status']); ?>
+                        <?php endif; ?>
+
+                        <form method="POST" action="Index.php#contact" class="message-form">
                             <div class="form-group">
                                 <label for="name">Your Name</label>
                                 <input type="text" id="name" name="name" placeholder="Enter your name" required>
@@ -350,7 +416,7 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                                 <textarea id="message" name="message" rows="4" placeholder="Type your message..." required></textarea>
                             </div>
 
-                            <button type="button" class="btn-send" onclick="alert('Message sending is currently offline. Please reach us via our email or phone number!')">
+                            <button type="submit" name="send_message" class="btn-send">
                                 <i class="fa-regular fa-paper-plane"></i> SEND MESSAGE
                             </button>
                         </form>
