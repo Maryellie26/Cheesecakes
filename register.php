@@ -88,7 +88,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $insert_stmt = $conn->prepare("INSERT INTO users (fullname, email, password, age, phone) VALUES (?, ?, ?, ?, ?)");
             $insert_stmt->bind_param("sssis", $data['fullname'], $data['email'], $hashed_password, $data['age'], $data['phone']);
 
-            
+            if ($insert_stmt->execute()) {
+                $new_id = $conn->insert_id;
+                $_SESSION['user_id']    = $new_id;
+                $_SESSION['user_email'] = $data['email'];
+                $_SESSION['username']   = $data['fullname'];
+                header("Location: success.php?id=" . $new_id);
+                exit;
+            } else {
+                
                 $errors[] = "Something went wrong. Please try again.";
             }
             $insert_stmt->close();
