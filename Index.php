@@ -1,0 +1,437 @@
+<?php
+session_start();
+
+$menu_items = [
+    [
+        "id" => 1,
+        "name" => "Strawberry Cheesecake",
+        "desc" => "Creamy cheesecake with fresh strawberry topping.",
+        "price" => "180.00",
+        "image" => "images/strawberry.png.png"
+    ],
+    [
+        "id" => 2,
+        "name" => "Blueberry Cheesecake",
+        "desc" => "Smooth cheesecake with sweet blueberry compote.",
+        "price" => "180.00",
+        "image" => "images/blueberry.png.png"
+    ],
+    [
+        "id" => 3,
+        "name" => "Chocolate Cheesecake",
+        "desc" => "Rich chocolate cheesecake on chocolate crust.",
+        "price" => "180.00",
+        "image" => "images/chocolate.png.png"
+    ],
+    [
+        "id" => 4,
+        "name" => "Mango Cheesecake",
+        "desc" => "Creamy cheesecake with real mango goodness.",
+        "price" => "180.00",
+        "image" => "images/mango.png.png"
+    ],
+    [
+        "id" => 5,
+        "name" => "Oreo Cheesecake",
+        "desc" => "Classic cheesecake with crunchy Oreo cookies.",
+        "price" => "180.00",
+        "image" => "images/oreo.png.png"
+    ],
+    [
+        "id" => 6,
+        "name" => "Caramel Cheesecake",
+        "desc" => "Creamy cheesecake topped with rich caramel.",
+        "price" => "180.00",
+        "image" => "images/caramel.png.png"
+    ],
+    [
+        "id" => 7,
+        "name" => "Matcha Cheesecake",
+        "desc" => "Smooth matcha cheesecake with a hint of green tea.",
+        "price" => "180.00",
+        "image" => "images/matcha.png.png"
+    ],
+    [
+        "id" => 8,
+        "name" => "Red Velvet Cheesecake",
+        "desc" => "Red velvet cake with creamy cheese cake layer.",
+        "price" => "180.00",
+        "image" => "images/redvelvet.png"
+    ]
+];
+
+$total_items = 0;
+$total_price = 0.00;
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $item) {
+        $total_items += (int)$item['qty'];
+        $total_price += ((float)$item['price'] * (int)$item['qty']);
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheesecake Delight</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="#home" class="brand-logo-nav">
+            <img src="images/cheesecakeLogo.png" alt="Logo">
+            <span class="nav-brand-name">Cheesecake Delight</span>
+        </a>
+        <nav class="nav-links">
+            <a href="#home" class="nav-item">HOME</a>
+            <a href="#about" class="nav-item">ABOUT US</a>
+            <a href="#menu" class="nav-item">MENU</a>
+            <a href="#reviews" class="nav-item">REVIEWS</a>
+            <a href="#contact" class="nav-item">CONTACT</a>
+        </nav>
+        
+        <div class="nav-icons">
+            <a href="#" class="icon-link" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
+            <a href="cart.php" class="icon-link cart-icon" aria-label="Shopping Cart">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <?php if ($total_items > 0): ?>
+                    <span class="cart-badge"><?php echo $total_items; ?></span>
+                <?php endif; ?>
+            </a>
+
+            <?php if (isset($_SESSION['user_email'])): ?>
+                <span style="color: #ffffff; font-size: 13.5px; font-weight: 700; margin-left: 6px;">
+                    <?php echo htmlspecialchars($_SESSION['user_email']); ?>
+                </span>
+                <a href="logout.php" class="btn-signin" style="padding: 7px 18px; font-size: 13.5px;">Logout</a>
+            <?php else: ?>
+                <a href="login.php" class="btn-signin">Sign In</a>
+            <?php endif; ?>
+        </div>
+    </header>
+
+    <section id="home" class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="main-title">A LITTLE SLICE</h1>
+                <h2 class="sub-script">of happiness in every bite</h2>
+                <p class="tagline">Made with love, served with joy!</p>
+            </div>
+            <div class="cta-group">
+                <a href="#menu" class="btn btn-primary">Shop Now</a>
+                <a href="#contact" class="btn btn-secondary">Contact Us</a>
+            </div>
+        </div>
+    </section>
+    <div class="footer-bar"></div>
+
+    <section id="about" class="about-section">
+        <div class="about-container">
+            <div class="about-left">
+                <div class="about-header">
+                    <span class="about-script">About</span>
+                    <h2 class="about-title">Cheesecake Delight</h2>
+                    <div class="heart-divider">
+                        <span class="line"></span>
+                        <span class="heart">&#9825;</span>
+                        <span class="line"></span>
+                    </div>
+                </div>
+                <p class="about-description">
+                    Cheesecake Delight was born from a simple love for baking and a dream to share happiness in every slice.
+                </p>
+                <div class="about-btn-group">
+                    <a href="#menu" class="btn btn-primary">Explore Our Flavors</a>
+                </div>
+            </div>
+
+            <div class="about-right">
+                <div class="img-large-card">
+                    <img src="images/girlbaking.png" alt="Baker decorating cheesecake" class="about-img">
+                </div>
+                <div class="img-small-row">
+                    <div class="img-small-card">
+                        <img src="images/pouring.png" alt="Pouring batter into pan" class="about-img">
+                    </div>
+                    <div class="img-small-card">
+                        <img src="images/cream.png" alt="Whisking cream mixture" class="about-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="footer-bar"></div>
+
+    <section id="menu" class="menu-section">
+    <div class="menu-container">
+        <h2 class="section-title">OUR MENU</h2>
+        
+        <div class="menu-grid">
+            <?php foreach ($menu_items as $item): ?>
+                <div class="menu-card">
+                    <div class="card-image">
+                        <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                    </div>
+                    <div class="card-body">
+                        <h3 class="item-title"><?php echo htmlspecialchars($item['name']); ?></h3>
+                        <p class="item-desc"><?php echo htmlspecialchars($item['desc']); ?></p>
+                        
+                        <form action="cart.php" method="POST" class="card-footer menu-action-row">
+                            <input type="hidden" name="action" value="add">
+                            <input type="hidden" name="product_id" value="<?php echo $item['id']; ?>">
+                            
+                            <span class="item-price">&#8369;<?php echo htmlspecialchars($item['price']); ?></span>
+
+                            <div class="action-controls-wrap">
+                                <!-- No-JS Stepper Pill Box -->
+                                <div class="nojs-stepper-box">
+                                    <input type="number" name="quantity" value="1" min="1" max="99" class="nojs-qty-input">
+                                </div>
+
+                                <!-- Add to Cart Pill Button -->
+                                <button type="submit" class="add-cart-pill-btn">
+                                    Add <i class="fa-solid fa-cart-shopping"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if ($total_items > 0): ?>
+            <div class="floating-cart-bar">
+                <div class="floating-cart-details">
+                    <div class="cart-icon-circle">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </div>
+                    <div class="floating-cart-text">
+                        <span class="floating-cart-count"><?php echo $total_items; ?> Items in Bag</span>
+                        <span class="floating-cart-total">&#8369;<?php echo number_format($total_price, 2); ?></span>
+                    </div>
+                </div>
+                <a href="cart.php" class="floating-checkout-btn" style="text-decoration: none;">
+                    Open Cart &rarr;
+                </a>
+            </div>
+        <?php endif; ?>
+
+    </div>
+</section>
+    <div class="footer-bar"></div>
+
+    <section id="reviews" class="reviews-section">
+        <div class="reviews-container">
+            <h2 class="section-title">OUR HAPPY CUSTOMERS</h2>
+            <div class="reviews-grid">
+                <div class="review-card">
+                    <div class="avatar-box">
+                        <img src="images/emily.png" alt="Emily Carter" class="avatar-img">
+                    </div>
+                    <h3 class="customer-name">Emily Carter</h3>
+                    <div class="star-rating">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="review-text">
+                        The perfect balance of sweetness and creaminess. I'll definitely be coming back for more!
+                    </p>
+                </div>
+
+                <div class="review-card">
+                    <div class="avatar-box">
+                        <img src="images/jamie.png" alt="Jamie Smith" class="avatar-img">
+                    </div>
+                    <h3 class="customer-name">Jamie Smith</h3>
+                    <div class="star-rating">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="review-text">
+                        Absolutely delicious! The cheesecake was creamy, fresh, and had the perfect balance of sweetness.
+                    </p>
+                </div>
+
+                <div class="review-card">
+                    <div class="avatar-box">
+                        <img src="images/olivia.png" alt="Olivia Miller" class="avatar-img">
+                    </div>
+                    <h3 class="customer-name">Olivia Miller</h3>
+                    <div class="star-rating">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="review-text">
+                        The cheesecake tasted amazing and looked beautiful too. Definitely worth every bite!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-photo-strip">
+            <div class="photo-strip-item">
+                <img src="images/satoberi.png" alt="Strawberry Cheesecake">
+            </div>
+            <div class="photo-strip-item">
+                <img src="images/variety.png" alt="Variety of Cheesecakes">
+            </div>
+            <div class="photo-strip-item">
+                <img src="images/slice.png" alt="Berry Cheesecake Slice">
+            </div>
+        </div>
+    </section>
+    <div class="footer-bar"></div>
+
+    <section id="contact" class="contact-section">
+        <div class="contact-container">
+            <h2 class="section-title">CONTACT US</h2>
+            <div class="contact-content">
+                <div class="contact-left">
+                    <div class="info-list">
+                        <div class="info-card">
+                            <div class="icon-circle"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="info-details">
+                                <h3>Visit Us</h3>
+                                <p>Dumaguete, Philippines</p>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon-circle"><i class="fa-solid fa-phone"></i></div>
+                            <div class="info-details">
+                                <h3>Call Us</h3>
+                                <p>+63 675 345 7256</p>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon-circle"><i class="fa-solid fa-envelope"></i></div>
+                            <div class="info-details">
+                                <h3>Email Us</h3>
+                                <p>cheesecakedelight@gmail.com</p>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon-circle"><i class="fa-solid fa-clock"></i></div>
+                            <div class="info-details">
+                                <h3>Business Hours</h3>
+                                <p>Mon - Sun: 9AM - 8PM</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cheesecake-graphic"></div>
+                </div>
+
+                <div class="contact-right">
+                    <div class="form-card">
+                        <div class="form-header">
+                            <i class="fa-regular fa-envelope form-icon"></i>
+                            <h3 class="form-title">Send Us a Message</h3>
+                        </div>
+                        <form onsubmit="return false;" class="message-form">
+                            <div class="form-group">
+                                <label for="name">Your Name</label>
+                                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Your Email</label>
+                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" rows="4" placeholder="Type your message..." required></textarea>
+                            </div>
+
+                            <button type="button" class="btn-send" onclick="alert('Message sending is currently offline. Please reach us via our email or phone number!')">
+                                <i class="fa-regular fa-paper-plane"></i> SEND MESSAGE
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="footer-bar"></div>
+
+    <footer id="footer" class="site-footer">
+        <div class="footer-container">
+            <div class="footer-col footer-brand">
+                <div class="footer-logo">
+                    <img src="images/logors.png" alt="Cheesecake Delight Logo" class="footer-logo-img">
+                    <div class="footer-brand-name">
+                        <span>Cheesecake</span>
+                        <span>Delight</span>
+                    </div>
+                </div>
+                <p class="footer-tagline">
+                    Made with love, served with joy!<br>
+                    We bake a little slice of happiness in every bite
+                </p>
+                <div class="footer-social-box">
+                    <h4>Follow Us</h4>
+                    <div class="social-icons">
+                        <a href="#" class="social-circle"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="social-circle"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="social-circle"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#home"><i class="fa-solid fa-house"></i> Home</a></li>
+                    <li><a href="#menu"><i class="fa-solid fa-cake-candles"></i> Menu</a></li>
+                    <li><a href="#about"><i class="fa-regular fa-heart"></i> About Us</a></li>
+                    <li><a href="#contact"><i class="fa-regular fa-comment-dots"></i> Contact Us</a></li>
+                    <li><a href="#menu"><i class="fa-solid fa-bag-shopping"></i> Order Now</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3 class="footer-heading">Customer Info</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fa-solid fa-truck"></i> Delivery &amp; Shipping</a></li>
+                    <li><a href="#"><i class="fa-solid fa-rotate-left"></i> Return &amp; Refunds</a></li>
+                    <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Privacy and Policy</a></li>
+                    <li><a href="#"><i class="fa-regular fa-file-lines"></i> Terms &amp; Conditions</a></li>
+                    <li><a href="#"><i class="fa-regular fa-circle-question"></i> FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col footer-newsletter">
+                <h3 class="footer-heading">Stay Sweet!</h3>
+                <p class="newsletter-desc">
+                    Subscribe to get the latest updates, offers, and sweet surprises!
+                </p>
+                <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Thank you for subscribing!');">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit" aria-label="Subscribe">
+                        <i class="fa-regular fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom"></div>
+    </footer>
+    <div class="footer-bar"></div>
+
+    <script>
+        function stepQty(inputId, delta) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, Math.min(99, val + delta));
+            input.value = val;
+        }
+    </script>
+</body>
+</html>
