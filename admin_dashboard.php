@@ -271,6 +271,7 @@ if ($user_count_res && $urow = $user_count_res->fetch_assoc()) {
             <a href="admin_dashboard.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item">INVENTORY</a>
             <a href="admin_orders.php" class="nav-item">ORDERS</a>
+            <a href="admin_history.php" class="nav-item">HISTORY</a>
             <a href="admin_users.php" class="nav-item">USERS</a>
             <a href="admin_messages.php" class="nav-item">MESSAGES</a>
             <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
@@ -362,6 +363,17 @@ if ($user_count_res && $urow = $user_count_res->fetch_assoc()) {
                         <p>Track purchases, manage order fulfillment, and update statuses.</p>
                     </div>
                     <a href="admin_orders.php" class="btn-module" style="background-color: #27ae60;">Manage Orders &rarr;</a>
+                </div>
+
+                <div class="module-card">
+                    <div>
+                        <div class="module-card-top">
+                            <div class="module-icon" style="background-color: #fff3e0; color: #e67e22;"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <h2>Order History</h2>
+                        </div>
+                        <p>Track past completed purchases, filter by status, and review order records.</p>
+                    </div>
+                    <a href="admin_history.php" class="btn-module" style="background-color: #e67e22;">View History &rarr;</a>
                 </div>
 
                 <div class="module-card">
