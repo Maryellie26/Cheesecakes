@@ -57,8 +57,11 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
             display: flex;
             justify-content: center;
             align-items: center;
+            background-image: url('images/cheesecakebgg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
-
         .dashboard-card {
             background: #fffdf7;
             max-width: 950px;

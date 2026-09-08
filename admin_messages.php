@@ -50,6 +50,11 @@ if ($res) {
             padding: 50px 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            background-image: url('images/cheesecakebgg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .admin-card {
