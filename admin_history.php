@@ -149,7 +149,7 @@ if ($res) {
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            background-image: url('images/cheesecakebg.png');
+            background-image: url('images/cheesecakebgg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
