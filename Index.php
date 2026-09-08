@@ -217,7 +217,8 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         
         <div class="menu-grid">
             <?php foreach ($menu_items as $item): 
-                $available_stock = max(0, (int)$item['stock']);
+                $in_cart = isset($_SESSION['cart'][$item['id']]) ? (int)$_SESSION['cart'][$item['id']]['qty'] : 0;
+                $available_stock = max(0, (int)$item['stock'] - $in_cart);
             ?>
                 <div class="menu-card">
                     <div class="card-image">

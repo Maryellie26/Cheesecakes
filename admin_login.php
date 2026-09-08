@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_login'])) {
     $password = $_POST['password'] ?? '';
 
     // Hardcoded secure admin credentials (change these as needed)
-    $ADMIN_USER = 'admin';
+    $ADMIN_USER = 'Marielle';
     $ADMIN_PASS = 'admin123';
 
     if ($username === $ADMIN_USER && $password === $ADMIN_PASS) {

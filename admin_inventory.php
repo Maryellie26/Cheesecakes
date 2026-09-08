@@ -58,7 +58,7 @@ if ($res) {
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
         .admin-wrap {
-            min-height: 85vh;
+            min-height: 88vh;
             padding: 50px 20px;
             display: flex;
             justify-content: center;
@@ -148,7 +148,8 @@ if ($res) {
         <nav class="nav-links">
             <a href="admin_dashboard.php" class="nav-item">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">INVENTORY</a>
-            <a href="index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
+            <a href="admin_messages.php" class="nav-item">MESSAGES</a>
+            <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
             <a href="admin_inventory.php?logout=1" class="nav-item" style="color: #ffd6df;">LOGOUT ADMIN</a>
         </nav>
     </header>

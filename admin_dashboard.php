@@ -9,15 +9,21 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
 }
 
 // Quick stats queries
-$total_flavors = 0;
-$out_of_stock  = 0;
-$total_units   = 0;
+$total_flavors  = 0;
+$out_of_stock   = 0;
+$total_units    = 0;
+$total_messages = 0;
 
 $stats_res = $conn->query("SELECT COUNT(*) AS total_products, SUM(stock) AS total_units, SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) AS out_of_stock FROM products");
 if ($stats_res && $row = $stats_res->fetch_assoc()) {
     $total_flavors = (int)$row['total_products'];
     $total_units   = (int)$row['total_units'];
     $out_of_stock  = (int)$row['out_of_stock'];
+}
+
+$msg_count_res = $conn->query("SELECT COUNT(*) AS total_msgs FROM messages");
+if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
+    $total_messages = (int)$mrow['total_msgs'];
 }
 ?>
 <!DOCTYPE html>
@@ -34,16 +40,28 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     
     <style>
+        /* Pin footer to bottom of viewport */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .dashboard-wrapper {
-            min-height: 80vh;
-            padding: 50px 20px;
+            flex: 1;
+            padding: 40px 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
         }
 
         .dashboard-card {
             background: #fffdf7;
-            max-width: 900px;
+            max-width: 950px;
             width: 100%;
             border-radius: 32px;
             padding: 42px 38px;
@@ -94,8 +112,8 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
         /* Stat Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
             margin-bottom: 35px;
         }
 
@@ -103,41 +121,41 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
             background: #ffffff;
             border: 1.5px solid #f9cad7;
             border-radius: 20px;
-            padding: 20px;
+            padding: 18px 16px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             background-color: #ffdce6;
             color: #f76e8e;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             flex-shrink: 0;
         }
 
         .stat-info h3 {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             color: #e65275;
         }
 
         .stat-info p {
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: 600;
             color: #63534d;
         }
 
-        /* Dashboard Actions */
+        /* Action Modules */
         .modules-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
@@ -145,7 +163,7 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
             background: #ffffff;
             border: 1.5px solid #fce3ea;
             border-radius: 24px;
-            padding: 26px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -160,42 +178,42 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
         .module-card-top {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             margin-bottom: 12px;
         }
 
         .module-icon {
-            width: 42px;
-            height: 42px;
+            width: 38px;
+            height: 38px;
             background-color: #fff0f4;
             color: #e65275;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .module-card h2 {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 800;
             color: #4a3431;
         }
 
         .module-card p {
-            font-size: 13px;
+            font-size: 12.5px;
             color: #6d6260;
             line-height: 1.45;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .btn-module {
             background-color: #f76e8e;
             color: #ffffff;
             text-decoration: none;
-            padding: 11px 18px;
+            padding: 10px 16px;
             border-radius: 12px;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 700;
             text-align: center;
             transition: background-color 0.2s ease;
@@ -205,8 +223,15 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
             background-color: #e55a7b;
         }
 
-        @media (max-width: 768px) {
-            .stats-grid, .modules-grid {
+        .footer-bar {
+            margin-top: auto;
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .modules-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -215,14 +240,15 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
 <body>
 
     <header class="navbar">
-        <a href="index.php" class="brand-logo-nav">
+        <a href="admin_dashboard.php" class="brand-logo-nav">
             <img src="images/cheesecakeLogo.png" alt="Logo">
             <span class="nav-brand-name">Cheesecake Delight</span>
         </a>
         <nav class="nav-links">
             <a href="admin_dashboard.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item">INVENTORY</a>
-            <a href="index.php" class="nav-item" target="_blank">VIEW STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
+            <a href="admin_messages.php" class="nav-item">MESSAGES</a>
+            <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
         </nav>
     </header>
 
@@ -231,14 +257,14 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
             <div class="dashboard-header">
                 <div class="dashboard-title">
                     <h1>Administrator Dashboard</h1>
-                    <p>Welcome back! Manage store inventory and monitor operations.</p>
+                    <p>Manage stock levels, customer feedback, and website inventory.</p>
                 </div>
                 <a href="admin_inventory.php?logout=1" class="admin-logout-btn">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
                 </a>
             </div>
 
-            <!-- Store Metrics -->
+            <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-icon"><i class="fa-solid fa-cake-candles"></i></div>
@@ -252,7 +278,7 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
                     <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                     <div class="stat-info">
                         <h3><?php echo $total_units; ?></h3>
-                        <p>Total Units in Stock</p>
+                        <p>Units in Stock</p>
                     </div>
                 </div>
 
@@ -263,17 +289,25 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
                         <p>Out of Stock</p>
                     </div>
                 </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon" style="background-color: #e8f4fd; color: #2980b9;"><i class="fa-solid fa-comments"></i></div>
+                    <div class="stat-info">
+                        <h3 style="color: #2980b9;"><?php echo $total_messages; ?></h3>
+                        <p>User Messages</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- Action Modules -->
+            <!-- Modules -->
             <div class="modules-grid">
                 <div class="module-card">
                     <div>
                         <div class="module-card-top">
-                            <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <div class="module-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                             <h2>Stock &amp; Inventory</h2>
                         </div>
-                        <p>Review real-time stock levels, restock flavors, and modify available quantities for customers.</p>
+                        <p>Review and modify live cake stock quantities for your store menu.</p>
                     </div>
                     <a href="admin_inventory.php" class="btn-module">Manage Inventory &rarr;</a>
                 </div>
@@ -281,18 +315,28 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
                 <div class="module-card">
                     <div>
                         <div class="module-card-top">
-                            <div class="module-icon"><i class="fa-solid fa-store"></i></div>
-                            <h2>Customer Storefront</h2>
+                            <div class="module-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                            <h2>User Inquiries</h2>
                         </div>
-                        <p>Open the live customer-facing storefront in a new tab to see updated cards and real-time badges.</p>
+                        <p>Read concerns, feedback, and customer questions sent from Contact Us.</p>
                     </div>
-                    <a href="index.php" class="btn-module" target="_blank">Open Storefront &rarr;</a>
+                    <a href="admin_messages.php" class="btn-module">Read Messages &rarr;</a>
+                </div>
+
+                <div class="module-card">
+                    <div>
+                        <div class="module-card-top">
+                            <div class="module-icon"><i class="fa-solid fa-store"></i></div>
+                            <h2>Live Storefront</h2>
+                        </div>
+                        <p>View your public menu and test ordering workflows as a customer.</p>
+                    </div>
+                    <a href="Index.php" class="btn-module" target="_blank">Open Storefront &rarr;</a>
                 </div>
             </div>
         </div>
     </main>
 
     <div class="footer-bar"></div>
-
 </body>
 </html>
