@@ -2,13 +2,13 @@
 session_start();
 require_once 'db.php';
 
-// Security Guard: Only authenticated administrators can access
+// Security Guard: Only authenticated administrators can access[cite: 3]
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header("Location: admin_login.php");
     exit;
 }
 
-// Handle Admin Logout
+// Handle Admin Logout[cite: 3]
 if (isset($_GET['logout'])) {
     unset($_SESSION['is_admin']);
     unset($_SESSION['admin_user']);
@@ -100,8 +100,18 @@ if ($res) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .admin-wrap {
-            min-height: 88vh;
+            flex: 1;
             padding: 50px 20px;
             display: flex;
             justify-content: center;
@@ -111,6 +121,7 @@ if ($res) {
             background-position: center;
             background-repeat: no-repeat;
         }
+
         .admin-card {
             background: #fffdf5;
             max-width: 1100px;
@@ -120,6 +131,7 @@ if ($res) {
             box-shadow: 0 10px 30px rgba(0,0,0,0.06);
             border: 1.5px solid #fce3ea;
         }
+
         .card-top-bar {
             display: flex;
             justify-content: space-between;
@@ -128,11 +140,13 @@ if ($res) {
             flex-wrap: wrap;
             gap: 12px;
         }
+
         .inventory-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
+
         .inventory-table th, .inventory-table td {
             padding: 12px 14px;
             text-align: left;
@@ -140,11 +154,13 @@ if ($res) {
             font-size: 13.5px;
             vertical-align: middle;
         }
+
         .inventory-table th {
             color: #e65275;
             font-weight: 800;
             background: #fff5f7;
         }
+
         .stock-input, .text-input-table {
             padding: 6px 10px;
             border: 1.5px solid #f3d1db;
@@ -154,12 +170,15 @@ if ($res) {
             outline: none;
             font-family: 'Montserrat', sans-serif;
         }
+
         .stock-input {
             width: 70px;
         }
+
         .price-input {
             width: 85px;
         }
+
         .btn-action {
             border: none;
             border-radius: 8px;
@@ -169,22 +188,27 @@ if ($res) {
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
         .btn-update {
             background-color: #ff709b;
             color: #ffffff;
         }
+
         .btn-update:hover {
             background-color: #e8507c;
         }
+
         .btn-delete {
             background-color: #ffebee;
             color: #e74c3c;
             border: 1px solid #f5c2c7;
         }
+
         .btn-delete:hover {
             background-color: #e74c3c;
             color: #ffffff;
         }
+
         .btn-add-toggle {
             background-color: #27ae60;
             color: #ffffff;
@@ -199,9 +223,11 @@ if ($res) {
             cursor: pointer;
             border: none;
         }
+
         .btn-add-toggle:hover {
             background-color: #219653;
         }
+
         .item-thumb {
             width: 40px;
             height: 40px;
@@ -209,6 +235,7 @@ if ($res) {
             vertical-align: middle;
             margin-right: 8px;
         }
+
         .add-product-panel {
             background: #ffffff;
             border: 1.5px dashed #f7b4c4;
@@ -217,12 +244,14 @@ if ($res) {
             margin-bottom: 25px;
             display: none;
         }
+
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
             margin-bottom: 12px;
         }
+
         .form-row input, .form-row textarea {
             width: 100%;
             padding: 9px 12px;
@@ -230,6 +259,14 @@ if ($res) {
             border-radius: 8px;
             font-size: 13px;
             outline: none;
+        }
+
+        .footer-bar {
+            height: 70px;
+            background-color: #f77290;
+            width: 100%;
+            flex-shrink: 0;
+            margin-top: auto;
         }
     </style>
 </head>
@@ -336,6 +373,8 @@ if ($res) {
             </table>
         </div>
     </main>
+
+    <div class="footer-bar"></div>
 
     <script>
         function toggleAddForm() {
