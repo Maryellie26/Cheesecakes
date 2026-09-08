@@ -9,7 +9,6 @@ if (isset($_SESSION['user_email'])) {
 }
 
 $errors = [];
-$success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
     $firstname = trim($_POST['firstname'] ?? '');
@@ -54,7 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             $stmt->bind_param("ssis", $fullname, $email, $age, $hashed);
 
             if ($stmt->execute()) {
-                $success = "Account created successfully! You can now log in.";
+                // Auto-login session creation
+                $_SESSION['user_id']    = $stmt->insert_id;
+                $_SESSION['user_email'] = $email;
+                $_SESSION['username']   = $fullname;
+                $_SESSION['just_registered'] = true;
+
+                $stmt->close();
+                $check->close();
+
+                header("Location: success.php");
+                exit;
             } else {
                 $errors[] = "Database error: Unable to complete registration.";
             }
@@ -151,15 +160,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         .btn-register:hover {
             background-color: #d13d60;
         }
-        .banner {
+        .banner-err {
             padding: 11px 14px;
             border-radius: 10px;
             font-size: 13px;
             font-weight: 600;
             margin-bottom: 14px;
+            background-color: #ffe3e8;
+            color: #ba2348;
+            border: 1px solid #f7b4c4;
         }
-        .banner-err { background-color: #ffe3e8; color: #ba2348; border: 1px solid #f7b4c4; }
-        .banner-ok { background-color: #e6f9ed; color: #1b873f; border: 1px solid #a3e9be; }
 
         @media (max-width: 480px) {
             .form-row-split {
@@ -183,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             <p style="font-size: 13px; color: #63534d; text-align: center; margin-bottom: 22px;">Sign up to easily place and track your orders</p>
 
             <?php if (!empty($errors)): ?>
-                <div class="banner banner-err">
+                <div class="banner-err">
                     <ul style="padding-left: 18px; margin: 0;">
                         <?php foreach ($errors as $err): ?>
                             <li><?php echo htmlspecialchars($err); ?></li>
@@ -192,52 +202,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 </div>
             <?php endif; ?>
 
-            <?php if ($success): ?>
-                <div class="banner banner-ok">
-                    <?php echo htmlspecialchars($success); ?>
-                    <div style="margin-top: 6px;"><a href="login.php" style="color: #1b873f; font-weight: 800;">Log In Now &rarr;</a></div>
+            <form method="POST" action="register.php">
+                <div class="form-row-split">
+                    <div class="form-block">
+                        <label for="firstname">First Name</label>
+                        <input type="text" id="firstname" name="firstname" value="<?php echo htmlspecialchars($_POST['firstname'] ?? ''); ?>" required>
+                    </div>
+
+                    <div class="form-block">
+                        <label for="lastname">Last Name</label>
+                        <input type="text" id="lastname" name="lastname" value="<?php echo htmlspecialchars($_POST['lastname'] ?? ''); ?>" required>
+                    </div>
                 </div>
-            <?php else: ?>
-                <form method="POST" action="register.php">
-                    <!-- Separated First Name & Last Name -->
-                    <div class="form-row-split">
-                        <div class="form-block">
-                            <label for="firstname">First Name</label>
-                            <input type="text" id="firstname" name="firstname" value="<?php echo htmlspecialchars($_POST['firstname'] ?? ''); ?>" required placeholder="e.g. Maria">
-                        </div>
+                
+                <div class="form-block">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
+                </div>
 
-                        <div class="form-block">
-                            <label for="lastname">Last Name</label>
-                            <input type="text" id="lastname" name="lastname" value="<?php echo htmlspecialchars($_POST['lastname'] ?? ''); ?>" required placeholder="e.g. Santos">
-                        </div>
-                    </div>
-                    
-                    <div class="form-block">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required placeholder="name@domain.com">
-                    </div>
+                <div class="form-block">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" value="<?php echo htmlspecialchars($_POST['age'] ?? ''); ?>" required min="1" max="120">
+                </div>
 
-                    <div class="form-block">
-                        <label for="age">Age</label>
-                        <input type="number" id="age" name="age" value="<?php echo htmlspecialchars($_POST['age'] ?? ''); ?>" required min="1" max="120" placeholder="e.g. 20">
-                    </div>
+                <div class="form-block">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
 
-                    <div class="form-block">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required placeholder="Minimum 6 characters">
-                    </div>
+                <div class="form-block">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
 
-                    <div class="form-block">
-                        <label for="confirm_password">Confirm Password</label>
-                        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-type password">
-                    </div>
-
-                    <button type="submit" name="register" class="btn-register">Register Account</button>
-                    <p style="font-size: 13px; text-align: center; margin-top: 14px; color: #63534d;">
-                        Already registered? <a href="login.php" style="color: #e65275; font-weight: 700;">Sign in here</a>
-                    </p>
-                </form>
-            <?php endif; ?>
+                <button type="submit" name="register" class="btn-register">Register Account</button>
+                <p style="font-size: 13px; text-align: center; margin-top: 14px; color: #63534d;">
+                    Already registered? <a href="login.php" style="color: #e65275; font-weight: 700;">Sign in here</a>
+                </p>
+            </form>
         </div>
     </main>
 </body>
