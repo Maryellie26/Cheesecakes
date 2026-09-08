@@ -13,6 +13,8 @@ $total_flavors  = 0;
 $out_of_stock   = 0;
 $total_units    = 0;
 $total_messages = 0;
+$total_orders   = 0;
+$total_users    = 0;
 
 $stats_res = $conn->query("SELECT COUNT(*) AS total_products, SUM(stock) AS total_units, SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) AS out_of_stock FROM products");
 if ($stats_res && $row = $stats_res->fetch_assoc()) {
@@ -24,6 +26,16 @@ if ($stats_res && $row = $stats_res->fetch_assoc()) {
 $msg_count_res = $conn->query("SELECT COUNT(*) AS total_msgs FROM messages");
 if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
     $total_messages = (int)$mrow['total_msgs'];
+}
+
+$order_count_res = $conn->query("SELECT COUNT(*) AS total_orders FROM orders");
+if ($order_count_res && $orow = $order_count_res->fetch_assoc()) {
+    $total_orders = (int)$orow['total_orders'];
+}
+
+$user_count_res = $conn->query("SELECT COUNT(*) AS total_users FROM users");
+if ($user_count_res && $urow = $user_count_res->fetch_assoc()) {
+    $total_users = (int)$urow['total_users'];
 }
 ?>
 <!DOCTYPE html>
@@ -40,7 +52,6 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     
     <style>
-        /* Pin footer to bottom of viewport */
         html, body {
             height: 100%;
         }
@@ -64,7 +75,7 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
         }
         .dashboard-card {
             background: #fffdf7;
-            max-width: 950px;
+            max-width: 1100px;
             width: 100%;
             border-radius: 32px;
             padding: 42px 38px;
@@ -115,8 +126,8 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
         /* Stat Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
             margin-bottom: 35px;
         }
 
@@ -124,33 +135,33 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
             background: #ffffff;
             border: 1.5px solid #f9cad7;
             border-radius: 20px;
-            padding: 18px 16px;
+            padding: 16px 12px;
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
         }
 
         .stat-icon {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background-color: #ffdce6;
             color: #f76e8e;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             flex-shrink: 0;
         }
 
         .stat-info h3 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
             color: #e65275;
         }
 
         .stat-info p {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: #63534d;
         }
@@ -159,14 +170,14 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
         .modules-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            gap: 18px;
         }
 
         .module-card {
             background: #ffffff;
             border: 1.5px solid #fce3ea;
             border-radius: 24px;
-            padding: 24px;
+            padding: 22px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -198,13 +209,13 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
         }
 
         .module-card h2 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             color: #4a3431;
         }
 
         .module-card p {
-            font-size: 12.5px;
+            font-size: 12px;
             color: #6d6260;
             line-height: 1.45;
             margin-bottom: 18px;
@@ -214,9 +225,9 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
             background-color: #f76e8e;
             color: #ffffff;
             text-decoration: none;
-            padding: 10px 16px;
+            padding: 10px 14px;
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
             text-align: center;
             transition: background-color 0.2s ease;
@@ -230,9 +241,18 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
             margin-top: auto;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1050px) {
             .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .modules-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
             .modules-grid {
                 grid-template-columns: 1fr;
@@ -250,6 +270,8 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
         <nav class="nav-links">
             <a href="admin_dashboard.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item">INVENTORY</a>
+            <a href="admin_orders.php" class="nav-item">ORDERS</a>
+            <a href="admin_users.php" class="nav-item">USERS</a>
             <a href="admin_messages.php" class="nav-item">MESSAGES</a>
             <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
         </nav>
@@ -260,7 +282,7 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
             <div class="dashboard-header">
                 <div class="dashboard-title">
                     <h1>Administrator Dashboard</h1>
-                    <p>Manage stock levels, customer feedback, and website inventory.</p>
+                    <p>Manage stock levels, orders, registered users, feedback, and website inventory.</p>
                 </div>
                 <a href="admin_inventory.php?logout=1" class="admin-logout-btn">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
@@ -273,7 +295,7 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
                     <div class="stat-icon"><i class="fa-solid fa-cake-candles"></i></div>
                     <div class="stat-info">
                         <h3><?php echo $total_flavors; ?></h3>
-                        <p>Total Flavors</p>
+                        <p>Flavors</p>
                     </div>
                 </div>
 
@@ -281,7 +303,7 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
                     <div class="stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                     <div class="stat-info">
                         <h3><?php echo $total_units; ?></h3>
-                        <p>Units in Stock</p>
+                        <p>In Stock</p>
                     </div>
                 </div>
 
@@ -294,10 +316,26 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
                 </div>
 
                 <div class="stat-box">
+                    <div class="stat-icon" style="background-color: #e8f7ee; color: #27ae60;"><i class="fa-solid fa-bag-shopping"></i></div>
+                    <div class="stat-info">
+                        <h3 style="color: #27ae60;"><?php echo $total_orders; ?></h3>
+                        <p>Orders</p>
+                    </div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon" style="background-color: #ede7f6; color: #673ab7;"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3 style="color: #673ab7;"><?php echo $total_users; ?></h3>
+                        <p>Users</p>
+                    </div>
+                </div>
+
+                <div class="stat-box">
                     <div class="stat-icon" style="background-color: #e8f4fd; color: #2980b9;"><i class="fa-solid fa-comments"></i></div>
                     <div class="stat-info">
                         <h3 style="color: #2980b9;"><?php echo $total_messages; ?></h3>
-                        <p>User Messages</p>
+                        <p>Inquiries</p>
                     </div>
                 </div>
             </div>
@@ -310,9 +348,31 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
                             <div class="module-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
                             <h2>Stock &amp; Inventory</h2>
                         </div>
-                        <p>Review and modify live cake stock quantities for your store menu.</p>
+                        <p>Add flavors, modify prices, and edit live inventory counts.</p>
                     </div>
                     <a href="admin_inventory.php" class="btn-module">Manage Inventory &rarr;</a>
+                </div>
+
+                <div class="module-card">
+                    <div>
+                        <div class="module-card-top">
+                            <div class="module-icon" style="background-color: #e8f7ee; color: #27ae60;"><i class="fa-solid fa-receipt"></i></div>
+                            <h2>Customer Orders</h2>
+                        </div>
+                        <p>Track purchases, manage order fulfillment, and update statuses.</p>
+                    </div>
+                    <a href="admin_orders.php" class="btn-module" style="background-color: #27ae60;">Manage Orders &rarr;</a>
+                </div>
+
+                <div class="module-card">
+                    <div>
+                        <div class="module-card-top">
+                            <div class="module-icon" style="background-color: #ede7f6; color: #673ab7;"><i class="fa-solid fa-user-gear"></i></div>
+                            <h2>User Accounts</h2>
+                        </div>
+                        <p>View registered customers, reset credentials, or create accounts.</p>
+                    </div>
+                    <a href="admin_users.php" class="btn-module" style="background-color: #673ab7;">Manage Users &rarr;</a>
                 </div>
 
                 <div class="module-card">
@@ -321,7 +381,7 @@ if ($msg_count_res && $mrow = $msg_count_res->fetch_assoc()) {
                             <div class="module-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
                             <h2>User Inquiries</h2>
                         </div>
-                        <p>Read concerns, feedback, and customer questions sent from Contact Us.</p>
+                        <p>Read customer questions and feedback sent from Contact Us.</p>
                     </div>
                     <a href="admin_messages.php" class="btn-module">Read Messages &rarr;</a>
                 </div>

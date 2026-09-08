@@ -140,7 +140,6 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         </nav>
         
         <div class="nav-icons">
-            <a href="#" class="icon-link" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
             <a href="cart.php" class="icon-link cart-icon" aria-label="Shopping Cart">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <?php if ($total_items > 0): ?>

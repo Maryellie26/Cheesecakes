@@ -19,26 +19,69 @@ if (isset($_GET['logout'])) {
 $message = '';
 $error = '';
 
-// Handle Stock Update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_stock'])) {
+// --- CREATE: Add New Product ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
+    $name  = trim($_POST['name'] ?? '');
+    $desc  = trim($_POST['description'] ?? '');
+    $price = (float)($_POST['price'] ?? 0.00);
+    $stock = (int)($_POST['stock'] ?? 0);
+    $image = trim($_POST['image'] ?? 'images/strawberry.png.png');
+
+    if ($name === '' || $price <= 0 || $stock < 0) {
+        $error = "Please provide a valid product name, price, and stock.";
+    } else {
+        $stmt = $conn->prepare("INSERT INTO products (name, description, price, image, stock) VALUES (?, ?, ?, ?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("ssdsi", $name, $desc, $price, $image, $stock);
+            if ($stmt->execute()) {
+                $message = "Product added successfully!";
+            } else {
+                $error = "Database error: Could not add product.";
+            }
+            $stmt->close();
+        }
+    }
+}
+
+// --- UPDATE: Modify Existing Product ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_product'])) {
     $product_id = (int)($_POST['product_id'] ?? 0);
+    $name       = trim($_POST['name'] ?? '');
+    $price      = (float)($_POST['price'] ?? 0.00);
     $new_stock  = (int)($_POST['new_stock'] ?? 0);
 
-    if ($new_stock < 0) {
-        $error = "Stock cannot be negative.";
+    if ($new_stock < 0 || $price <= 0 || $name === '') {
+        $error = "Invalid product parameters.";
     } else {
-        $stmt = $conn->prepare("UPDATE products SET stock = ? WHERE id = ?");
-        $stmt->bind_param("ii", $new_stock, $product_id);
+        $stmt = $conn->prepare("UPDATE products SET name = ?, price = ?, stock = ? WHERE id = ?");
+        if ($stmt) {
+            $stmt->bind_param("sdii", $name, $price, $new_stock, $product_id);
+            if ($stmt->execute()) {
+                $message = "Product details updated successfully!";
+            } else {
+                $error = "Failed to update product details.";
+            }
+            $stmt->close();
+        }
+    }
+}
+
+// --- DELETE: Remove Product ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product'])) {
+    $product_id = (int)($_POST['product_id'] ?? 0);
+    $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $product_id);
         if ($stmt->execute()) {
-            $message = "Stock updated successfully!";
+            $message = "Product removed successfully.";
         } else {
-            $error = "Failed to update stock.";
+            $error = "Failed to delete product.";
         }
         $stmt->close();
     }
 }
 
-// Fetch all products
+// --- READ: Fetch all products ---
 $products = [];
 $res = $conn->query("SELECT id, name, price, image, stock FROM products ORDER BY id ASC");
 if ($res) {
@@ -62,85 +105,131 @@ if ($res) {
             padding: 50px 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             background-image: url('images/cheesecakebgg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
         }
-
         .admin-card {
             background: #fffdf5;
-            max-width: 950px;
+            max-width: 1100px;
             width: 100%;
             border-radius: 30px;
             padding: 40px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.06);
             border: 1.5px solid #fce3ea;
         }
+        .card-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
         .inventory-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 15px;
         }
         .inventory-table th, .inventory-table td {
-            padding: 14px 16px;
+            padding: 12px 14px;
             text-align: left;
             border-bottom: 1px solid #fce3ea;
-            font-size: 14px;
+            font-size: 13.5px;
+            vertical-align: middle;
         }
         .inventory-table th {
             color: #e65275;
             font-weight: 800;
             background: #fff5f7;
         }
-        .stock-input {
-            width: 80px;
-            padding: 8px 12px;
+        .stock-input, .text-input-table {
+            padding: 6px 10px;
             border: 1.5px solid #f3d1db;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
             outline: none;
             font-family: 'Montserrat', sans-serif;
-            transition: border-color 0.2s ease;
         }
-        .stock-input:focus {
-            border-color: #f76e8e;
+        .stock-input {
+            width: 70px;
         }
-        .btn-update-stock {
-            background-color: #ff709b;
-            color: #ffffff;
+        .price-input {
+            width: 85px;
+        }
+        .btn-action {
             border: none;
-            border-radius: 10px;
-            padding: 8px 18px;
-            font-size: 13px;
+            border-radius: 8px;
+            padding: 7px 12px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.15s ease;
+            transition: all 0.2s ease;
         }
-        .btn-update-stock:hover {
+        .btn-update {
+            background-color: #ff709b;
+            color: #ffffff;
+        }
+        .btn-update:hover {
             background-color: #e8507c;
-            transform: translateY(-1px);
+        }
+        .btn-delete {
+            background-color: #ffebee;
+            color: #e74c3c;
+            border: 1px solid #f5c2c7;
+        }
+        .btn-delete:hover {
+            background-color: #e74c3c;
+            color: #ffffff;
+        }
+        .btn-add-toggle {
+            background-color: #27ae60;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-add-toggle:hover {
+            background-color: #219653;
         }
         .item-thumb {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             object-fit: contain;
             vertical-align: middle;
-            margin-right: 12px;
+            margin-right: 8px;
         }
-        .stock-tag {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11.5px;
-            font-weight: 700;
-            margin-left: 6px;
+        .add-product-panel {
+            background: #ffffff;
+            border: 1.5px dashed #f7b4c4;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            display: none;
         }
-        .stock-tag.out {
-            background-color: #fde8e8;
-            color: #e74c3c;
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .form-row input, .form-row textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #f3d1db;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
         }
     </style>
 </head>
@@ -162,31 +251,54 @@ if ($res) {
 
     <main class="admin-wrap">
         <div class="admin-card">
-            <h1 class="cart-title" style="margin-bottom: 10px;">Stock &amp; Inventory Management</h1>
-            <p style="text-align: center; color: #6d6260; font-size: 14px; margin-bottom: 20px;">
-                Logged in as <strong>Administrator</strong>. Real-time updates reflect instantly on customer cards.
-            </p>
+            <div class="card-top-bar">
+                <div>
+                    <h1 class="cart-title" style="margin-bottom: 4px; text-align: left;">Stock &amp; Inventory Management</h1>
+                    <p style="color: #6d6260; font-size: 13.5px;">Manage product catalog, prices, and available counts.</p>
+                </div>
+                <button type="button" class="btn-add-toggle" onclick="toggleAddForm()">
+                    <i class="fa-solid fa-plus"></i> Add New Product
+                </button>
+            </div>
 
             <?php if ($message): ?>
-                <div style="background-color: #e6f9ed; color: #1b873f; border: 1.5px solid #a3e9be; padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; margin-bottom: 20px;">
+                <div style="background-color: #e6f9ed; color: #1b873f; border: 1.5px solid #a3e9be; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 13px; margin-bottom: 15px;">
                     <i class="fa-solid fa-circle-check"></i> <?php echo htmlspecialchars($message); ?>
                 </div>
             <?php endif; ?>
 
             <?php if ($error): ?>
-                <div style="background-color: #ffe8ec; color: #d13d60; border: 1.5px solid #f7b4c4; padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; margin-bottom: 20px;">
+                <div style="background-color: #ffe8ec; color: #d13d60; border: 1.5px solid #f7b4c4; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 13px; margin-bottom: 15px;">
                     <i class="fa-solid fa-circle-exclamation"></i> <?php echo htmlspecialchars($error); ?>
                 </div>
             <?php endif; ?>
 
+            <!-- CREATE: Add New Product Form -->
+            <div id="addProductBox" class="add-product-panel">
+                <h3 style="color: #e65275; margin-bottom: 12px; font-size: 16px;">Add New Cheesecake Flavor</h3>
+                <form method="POST" action="admin_inventory.php">
+                    <div class="form-row">
+                        <input type="text" name="name" placeholder="Flavor Name (e.g. Raspberry Swirl)" required>
+                        <input type="number" step="0.01" name="price" placeholder="Price (PHP)" required>
+                        <input type="number" name="stock" placeholder="Initial Stock" required min="0">
+                        <input type="text" name="image" placeholder="Image Path (e.g. images/strawberry.png.png)">
+                    </div>
+                    <div class="form-row">
+                        <textarea name="description" rows="2" placeholder="Product short description..."></textarea>
+                    </div>
+                    <button type="submit" name="add_product" class="btn-action btn-update" style="padding: 9px 18px;">Save Product</button>
+                </form>
+            </div>
+
+            <!-- READ & UPDATE & DELETE Table -->
             <table class="inventory-table">
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>Price</th>
-                        <th>Current Stock</th>
-                        <th>New Quantity</th>
-                        <th>Action</th>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Price (&#8369;)</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -194,26 +306,30 @@ if ($res) {
                         <tr>
                             <td>
                                 <img src="<?php echo htmlspecialchars($prod['image']); ?>" alt="" class="item-thumb">
-                                <strong><?php echo htmlspecialchars($prod['name']); ?></strong>
                             </td>
-                            <td>&#8369;<?php echo number_format($prod['price'], 2); ?></td>
-                            <td>
-                                <strong style="color: <?php echo $prod['stock'] > 0 ? '#27ae60' : '#e74c3c'; ?>;">
-                                    <?php echo (int)$prod['stock']; ?>
-                                </strong>
-                                <?php if ((int)$prod['stock'] <= 0): ?>
-                                    <span class="stock-tag out">Out of Stock</span>
-                                <?php endif; ?>
-                            </td>
+                            <!-- UPDATE Form -->
                             <form method="POST" action="admin_inventory.php">
                                 <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
                                 <td>
-                                    <input type="number" name="new_stock" value="<?php echo (int)$prod['stock']; ?>" min="0" max="999" class="stock-input" required>
+                                    <input type="text" name="name" value="<?php echo htmlspecialchars($prod['name']); ?>" class="text-input-table" style="width: 100%; min-width: 140px;" required>
                                 </td>
                                 <td>
-                                    <button type="submit" name="update_stock" class="btn-update-stock">Update Stock</button>
+                                    <input type="number" step="0.01" name="price" value="<?php echo htmlspecialchars($prod['price']); ?>" class="text-input-table price-input" required>
                                 </td>
+                                <td>
+                                    <input type="number" name="new_stock" value="<?php echo (int)$prod['stock']; ?>" min="0" max="999" class="stock-input" required>
+                                </td>
+                                <td style="white-space: nowrap;">
+                                    <button type="submit" name="update_product" class="btn-action btn-update" title="Save changes">Save</button>
                             </form>
+                                    <!-- DELETE Form -->
+                                    <form method="POST" action="admin_inventory.php" style="display:inline;" onsubmit="return confirm('Are you sure you want to permanently delete this product?');">
+                                        <input type="hidden" name="product_id" value="<?php echo $prod['id']; ?>">
+                                        <button type="submit" name="delete_product" class="btn-action btn-delete" title="Delete product">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -221,6 +337,11 @@ if ($res) {
         </div>
     </main>
 
-    <div class="footer-bar"></div>
+    <script>
+        function toggleAddForm() {
+            const box = document.getElementById('addProductBox');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </body>
 </html>
