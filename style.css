@@ -459,7 +459,7 @@ body {
     flex-grow: 1;
 }
 
-/* --- Menu Item Action Controls (Screenshot Style) --- */
+/* --- Menu Item Action Controls (Reference Pill Style) --- */
 .card-footer {
     display: flex;
     align-items: center;
@@ -477,81 +477,85 @@ body {
 .action-controls-wrap {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
-/* Stepper Pill Box: [- 1 +] */
-.stepper-box {
+/* Cream Pill Stepper: [- 1 +] */
+.stepper-pill-box {
     display: inline-flex;
     align-items: center;
-    background: #ffffff;
-    border: 1.5px solid #ff709b;
-    border-radius: 6px;
-    height: 26px;
-    overflow: hidden;
+    background: #fbf0df;
+    border-radius: 50px;
+    padding: 2px 6px;
+    height: 32px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
-.stepper-btn {
-    background-color: #ff709b;
-    color: #ffffff;
+.stepper-pill-btn {
+    background: transparent;
     border: none;
-    width: 22px;
+    color: #5c432d;
+    font-size: 15px;
+    font-weight: 700;
+    width: 20px;
     height: 100%;
-    font-size: 0.85rem;
-    font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
-    transition: background-color 0.15s ease;
+    transition: transform 0.15s ease, color 0.15s ease;
 }
 
-.stepper-btn:hover {
-    background-color: #e8507c;
+.stepper-pill-btn:hover {
+    color: #af7850;
+    transform: scale(1.15);
 }
 
-.stepper-input {
-    width: 26px;
+.stepper-pill-input {
+    width: 24px;
     height: 100%;
     border: none;
     outline: none;
     background: transparent;
     text-align: center;
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: 13px;
     font-family: 'Montserrat', sans-serif;
-    color: #4a3431;
+    color: #5c432d;
     -moz-appearance: textfield;
 }
 
-.stepper-input::-webkit-outer-spin-button,
-.stepper-input::-webkit-inner-spin-button {
+.stepper-pill-input::-webkit-outer-spin-button,
+.stepper-pill-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-/* Add Cart Pill Button */
-.add-cart-pill-btn {
-    background-color: #ff709b;
+/* Brown Pill Add to Cart Button */
+.btn-add-cart-ref {
+    background: #af7850;
     color: #ffffff;
     border: none;
-    border-radius: 6px;
-    height: 26px;
-    padding: 0 9px;
-    font-size: 0.75rem;
+    border-radius: 50px;
+    height: 32px;
+    padding: 0 16px;
+    font-size: 12.5px;
     font-weight: 700;
     font-family: 'Montserrat', sans-serif;
     cursor: pointer;
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    transition: background-color 0.15s ease, transform 0.15s ease;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(175, 120, 80, 0.25);
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
-.add-cart-pill-btn:hover {
-    background-color: #e8507c;
+.btn-add-cart-ref:hover {
+    background: #986540;
     transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(175, 120, 80, 0.35);
 }
 
 /* Floating Bottom Cart Bar */
@@ -1220,7 +1224,6 @@ footer.footer-bar {
 .cart-items-list {
     background: #ffffff;
     border-radius: 10px;
-    padding: px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.04);
 }
 
@@ -1454,14 +1457,21 @@ footer.footer-bar {
     .action-controls-wrap {
         gap: 4px;
     }
-    .stepper-btn {
+    .stepper-pill-box {
+        height: 28px;
+        padding: 1px 4px;
+    }
+    .stepper-pill-btn {
+        width: 16px;
+        font-size: 13px;
+    }
+    .stepper-pill-input {
         width: 18px;
+        font-size: 11.5px;
     }
-    .stepper-input {
-        width: 20px;
-    }
-    .add-cart-pill-btn {
-        padding: 0 6px;
-        font-size: 0.7rem;
+    .btn-add-cart-ref {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 11px;
     }
 }
