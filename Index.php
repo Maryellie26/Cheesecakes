@@ -29,64 +29,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_message'])) {
     exit;
 }
 
-$menu_items = [
-    [
-        "id" => 1,
-        "name" => "Strawberry Cheesecake",
-        "desc" => "Creamy cheesecake with fresh strawberry topping.",
-        "price" => "180.00",
-        "image" => "images/strawberry.png.png"
-    ],
-    [
-        "id" => 2,
-        "name" => "Blueberry Cheesecake",
-        "desc" => "Smooth cheesecake with sweet blueberry compote.",
-        "price" => "180.00",
-        "image" => "images/blueberry.png.png"
-    ],
-    [
-        "id" => 3,
-        "name" => "Chocolate Cheesecake",
-        "desc" => "Rich chocolate cheesecake on chocolate crust.",
-        "price" => "180.00",
-        "image" => "images/chocolate.png.png"
-    ],
-    [
-        "id" => 4,
-        "name" => "Mango Cheesecake",
-        "desc" => "Creamy cheesecake with real mango goodness.",
-        "price" => "180.00",
-        "image" => "images/mango.png.png"
-    ],
-    [
-        "id" => 5,
-        "name" => "Oreo Cheesecake",
-        "desc" => "Classic cheesecake with crunchy Oreo cookies.",
-        "price" => "180.00",
-        "image" => "images/oreo.png.png"
-    ],
-    [
-        "id" => 6,
-        "name" => "Caramel Cheesecake",
-        "desc" => "Creamy cheesecake topped with rich caramel.",
-        "price" => "180.00",
-        "image" => "images/caramel.png.png"
-    ],
-    [
-        "id" => 7,
-        "name" => "Matcha Cheesecake",
-        "desc" => "Smooth matcha cheesecake with a hint of green tea.",
-        "price" => "180.00",
-        "image" => "images/matcha.png.png"
-    ],
-    [
-        "id" => 8,
-        "name" => "Red Velvet Cheesecake",
-        "desc" => "Red velvet cake with creamy cheese cake layer.",
-        "price" => "180.00",
-        "image" => "images/redvelvet.png"
-    ]
+// Fallback catalog in case database table is temporarily empty
+$default_catalog = [
+    1 => ["name" => "Strawberry Cheesecake", "desc" => "Creamy cheesecake with fresh strawberry topping.", "price" => "180.00", "image" => "images/strawberry.png.png", "stock" => 10],
+    2 => ["name" => "Blueberry Cheesecake", "desc" => "Smooth cheesecake with sweet blueberry compote.", "price" => "180.00", "image" => "images/blueberry.png.png", "stock" => 8],
+    3 => ["name" => "Chocolate Cheesecake", "desc" => "Rich chocolate cheesecake on chocolate crust.", "price" => "180.00", "image" => "images/chocolate.png.png", "stock" => 12],
+    4 => ["name" => "Mango Cheesecake", "desc" => "Creamy cheesecake with real mango goodness.", "price" => "180.00", "image" => "images/mango.png.png", "stock" => 6],
+    5 => ["name" => "Oreo Cheesecake", "desc" => "Classic cheesecake with crunchy Oreo cookies.", "price" => "180.00", "image" => "images/oreo.png.png", "stock" => 9],
+    6 => ["name" => "Caramel Cheesecake", "desc" => "Creamy cheesecake topped with rich caramel.", "price" => "180.00", "image" => "images/caramel.png.png", "stock" => 7],
+    7 => ["name" => "Matcha Cheesecake", "desc" => "Smooth matcha cheesecake with a hint of green tea.", "price" => "180.00", "image" => "images/matcha.png.png", "stock" => 5],
+    8 => ["name" => "Red Velvet Cheesecake", "desc" => "Red velvet cake with creamy cheese cake layer.", "price" => "180.00", "image" => "images/redvelvet.png", "stock" => 4]
 ];
+
+// Fetch all products dynamically from database
+$menu_items = [];
+$prod_query = $conn->query("SELECT id, name, description AS `desc`, price, image, stock FROM products ORDER BY id ASC");
+if ($prod_query && $prod_query->num_rows > 0) {
+    while ($row = $prod_query->fetch_assoc()) {
+        $menu_items[] = $row;
+    }
+} else {
+    // Fallback to defaults if table hasn't been created yet
+    foreach ($default_catalog as $id => $item) {
+        $item['id'] = $id;
+        $menu_items[] = $item;
+    }
+}
 
 $total_items = 0;
 $total_price = 0.00;
@@ -129,6 +97,30 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             background-color: #ffe8ec;
             color: #d13d60;
             border: 1.5px solid #f7b4c4;
+        }
+
+        /* Available Stock Badge */
+        .stock-badge {
+            font-size: 11.5px;
+            font-weight: 700;
+            margin: 2px 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stock-badge.in-stock {
+            color: #27ae60;
+        }
+        .stock-badge.out-of-stock {
+            color: #e74c3c;
+        }
+
+        /* Disabled state when stock is 0 */
+        .btn-disabled {
+            background-color: #e0b2bd !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            transform: none !important;
         }
     </style>
 </head>
@@ -224,7 +216,9 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         <h2 class="section-title">OUR MENU</h2>
         
         <div class="menu-grid">
-            <?php foreach ($menu_items as $item): ?>
+            <?php foreach ($menu_items as $item): 
+                $available_stock = max(0, (int)$item['stock']);
+            ?>
                 <div class="menu-card">
                     <div class="card-image">
                         <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
@@ -233,18 +227,29 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                         <h3 class="item-title"><?php echo htmlspecialchars($item['name']); ?></h3>
                         <p class="item-desc"><?php echo htmlspecialchars($item['desc']); ?></p>
                         
+                        <span class="item-price">&#8369;<?php echo htmlspecialchars(number_format((float)$item['price'], 2)); ?></span>
+
+                        <!-- Dynamic Stock Status -->
+                        <?php if ($available_stock > 0): ?>
+                            <div class="stock-badge in-stock">&#9679; <?php echo $available_stock; ?> in stock</div>
+                        <?php else: ?>
+                            <div class="stock-badge out-of-stock">&#9679; Out of Stock</div>
+                        <?php endif; ?>
+
                         <form action="cart.php" method="POST" class="card-footer menu-action-row">
                             <input type="hidden" name="action" value="add">
                             <input type="hidden" name="product_id" value="<?php echo $item['id']; ?>">
-                            
-                            <span class="item-price">&#8369;<?php echo htmlspecialchars($item['price']); ?></span>
 
                             <div class="action-controls-wrap">
-                                <div class="nojs-stepper-box">
-                                    <input type="number" name="quantity" value="1" min="1" max="99" class="nojs-qty-input">
+                                <!-- Pink Stepper Box: [- 1 +] -->
+                                <div class="stepper-box">
+                                    <button type="button" class="stepper-btn" onclick="stepQty('qty_<?php echo $item['id']; ?>', -1, <?php echo $available_stock; ?>)" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>&minus;</button>
+                                    <input type="number" id="qty_<?php echo $item['id']; ?>" name="quantity" value="<?php echo $available_stock > 0 ? 1 : 0; ?>" min="1" max="<?php echo $available_stock; ?>" class="stepper-input" readonly>
+                                    <button type="button" class="stepper-btn" onclick="stepQty('qty_<?php echo $item['id']; ?>', 1, <?php echo $available_stock; ?>)" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>&plus;</button>
                                 </div>
 
-                                <button type="submit" class="add-cart-pill-btn">
+                                <!-- Pink Add to Cart Button -->
+                                <button type="submit" class="add-cart-pill-btn <?php echo $available_stock === 0 ? 'btn-disabled' : ''; ?>" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>
                                     Add <i class="fa-solid fa-cart-shopping"></i>
                                 </button>
                             </div>
@@ -491,11 +496,11 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     <div class="footer-bar"></div>
 
     <script>
-        function stepQty(inputId, delta) {
+        function stepQty(inputId, delta, maxStock) {
             const input = document.getElementById(inputId);
-            if (!input) return;
+            if (!input || maxStock <= 0) return;
             let val = parseInt(input.value) || 1;
-            val = Math.max(1, Math.min(99, val + delta));
+            val = Math.max(1, Math.min(maxStock, val + delta));
             input.value = val;
         }
     </script>

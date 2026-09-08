@@ -37,16 +37,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         $user_id = $_SESSION['user_id'] ?? null;
         $order_items_json = json_encode($_SESSION['cart']);
 
-        $stmt = $conn->prepare("INSERT INTO orders (user_id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("issssddds", $user_id, $fullname, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json);
+        // Database Transaction: Safely verifies stock and commits permanent deduction
+        $conn->begin_transaction();
 
-        if ($stmt->execute()) {
+        try {
+            foreach ($_SESSION['cart'] as $pid => $item) {
+                $qty = (int)$item['qty'];
+
+                // Lock row for safe concurrent check
+                $check_stmt = $conn->prepare("SELECT stock FROM products WHERE id = ? FOR UPDATE");
+                $check_stmt->bind_param("i", $pid);
+                $check_stmt->execute();
+                $res = $check_stmt->get_result();
+                $prod = $res->fetch_assoc();
+                $check_stmt->close();
+
+                if (!$prod || (int)$prod['stock'] < $qty) {
+                    throw new Exception("Sorry, " . $item['name'] . " does not have enough stock remaining.");
+                }
+
+                // Deduct stock permanently from database
+                $update_stmt = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
+                $update_stmt->bind_param("ii", $qty, $pid);
+                $update_stmt->execute();
+                $update_stmt->close();
+            }
+
+            // Insert into orders table
+            $stmt = $conn->prepare("INSERT INTO orders (user_id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("issssddds", $user_id, $fullname, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json);
+            $stmt->execute();
+            $stmt->close();
+
+            // Commit all changes safely
+            $conn->commit();
+
             $_SESSION['cart'] = [];
             $success = true;
-        } else {
-            $errors[] = "Unable to process order. Please try again.";
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $errors[] = $e->getMessage();
         }
-        $stmt->close();
     }
 }
 ?>
