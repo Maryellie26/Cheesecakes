@@ -12,16 +12,24 @@ $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
-    $fullname = trim($_POST['fullname'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm  = $_POST['confirm_password'] ?? '';
+    $firstname = trim($_POST['firstname'] ?? '');
+    $lastname  = trim($_POST['lastname'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $age       = (int)($_POST['age'] ?? 0);
+    $password  = $_POST['password'] ?? '';
+    $confirm   = $_POST['confirm_password'] ?? '';
 
-    if ($fullname === '') {
-        $errors[] = "Full name is required.";
+    if ($firstname === '') {
+        $errors[] = "First name is required.";
+    }
+    if ($lastname === '') {
+        $errors[] = "Last name is required.";
     }
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "A valid email address is required.";
+    }
+    if ($age <= 0 || $age > 120) {
+        $errors[] = "Please enter a valid age.";
     }
     if (strlen($password) < 6) {
         $errors[] = "Password must be at least 6 characters long.";
@@ -40,9 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         if ($check->num_rows > 0) {
             $errors[] = "An account with this email already exists.";
         } else {
+            $fullname = $firstname . ' ' . $lastname;
             $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $fullname, $email, $hashed);
+            $stmt = $conn->prepare("INSERT INTO users (fullname, email, age, password) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssis", $fullname, $email, $age, $hashed);
 
             if ($stmt->execute()) {
                 $success = "Account created successfully! You can now log in.";
@@ -85,17 +94,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         .auth-card {
             background-color: #fffdf7;
             width: 100%;
-            max-width: 480px;
+            max-width: 500px;
             border-radius: 36px;
             padding: 40px;
             box-shadow: 0 16px 40px rgba(0,0,0,0.08);
             border: 1.5px solid #fce3ea;
+        }
+        .form-row-split {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
         }
         .form-block {
             display: flex;
             flex-direction: column;
             gap: 6px;
             margin-bottom: 14px;
+            flex: 1;
+        }
+        .form-row-split .form-block {
+            margin-bottom: 0;
         }
         .form-block label {
             font-size: 13px;
@@ -109,6 +127,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             border: 1.5px solid #f3d1db;
             outline: none;
             font-size: 13.5px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+        }
+        .form-block input:focus {
+            border-color: #f76e8e;
         }
         .btn-register {
             background-color: #e65275;
@@ -120,6 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             width: 100%;
             cursor: pointer;
             margin-top: 6px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-register:hover {
+            background-color: #d13d60;
         }
         .banner {
             padding: 11px 14px;
@@ -130,6 +160,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
         }
         .banner-err { background-color: #ffe3e8; color: #ba2348; border: 1px solid #f7b4c4; }
         .banner-ok { background-color: #e6f9ed; color: #1b873f; border: 1px solid #a3e9be; }
+
+        @media (max-width: 480px) {
+            .form-row-split {
+                flex-direction: column;
+                gap: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -162,22 +199,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
                 </div>
             <?php else: ?>
                 <form method="POST" action="register.php">
-                    <div class="form-block">
-                        <label for="fullname">Full Name</label>
-                        <input type="text" id="fullname" name="fullname" value="<?php echo htmlspecialchars($_POST['fullname'] ?? ''); ?>" required placeholder="e.g. Maria Santos">
+                    <!-- Separated First Name & Last Name -->
+                    <div class="form-row-split">
+                        <div class="form-block">
+                            <label for="firstname">First Name</label>
+                            <input type="text" id="firstname" name="firstname" value="<?php echo htmlspecialchars($_POST['firstname'] ?? ''); ?>" required placeholder="e.g. Maria">
+                        </div>
+
+                        <div class="form-block">
+                            <label for="lastname">Last Name</label>
+                            <input type="text" id="lastname" name="lastname" value="<?php echo htmlspecialchars($_POST['lastname'] ?? ''); ?>" required placeholder="e.g. Santos">
+                        </div>
                     </div>
+                    
                     <div class="form-block">
                         <label for="email">Email Address</label>
                         <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required placeholder="name@domain.com">
                     </div>
+
+                    <div class="form-block">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" name="age" value="<?php echo htmlspecialchars($_POST['age'] ?? ''); ?>" required min="1" max="120" placeholder="e.g. 20">
+                    </div>
+
                     <div class="form-block">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" required placeholder="Minimum 6 characters">
                     </div>
+
                     <div class="form-block">
                         <label for="confirm_password">Confirm Password</label>
                         <input type="password" id="confirm_password" name="confirm_password" required placeholder="Re-type password">
                     </div>
+
                     <button type="submit" name="register" class="btn-register">Register Account</button>
                     <p style="font-size: 13px; text-align: center; margin-top: 14px; color: #63534d;">
                         Already registered? <a href="login.php" style="color: #e65275; font-weight: 700;">Sign in here</a>
