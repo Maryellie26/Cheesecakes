@@ -207,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             align-items: center;
             justify-content: center;
             padding: 60px 20px;
-            background-image: url('images/homepagebg.png');
+            background-image: url('images/cheesecakebgg.png');
             background-size: cover;
             background-position: center left;
             background-repeat: no-repeat;

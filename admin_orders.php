@@ -2,13 +2,13 @@
 session_start();
 require_once 'db.php';
 
-// Security Guard: Authenticated administrators only
+// Security Guard: Authenticated administrators only[cite: 12]
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header("Location: login.php");
     exit;
 }
 
-// Handle Admin Logout
+// Handle Admin Logout[cite: 12]
 if (isset($_GET['logout'])) {
     unset($_SESSION['is_admin']);
     unset($_SESSION['admin_user']);
@@ -19,10 +19,10 @@ if (isset($_GET['logout'])) {
 $notice = '';
 $error = '';
 
-// Ensure payment_method column exists
+// Ensure payment_method column exists[cite: 12]
 $conn->query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery'");
 
-// --- CREATE: Manually Add Order (Admin) ---
+// --- CREATE: Manually Add Order (Admin) ---[cite: 12]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_order'])) {
     $cust_name      = trim($_POST['customer_name'] ?? '');
     $email          = trim($_POST['email'] ?? '');
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_order'])) {
     }
 }
 
-// --- UPDATE: Modify Order Status ---
+// --- UPDATE: Modify Order Status ---[cite: 12]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id   = (int)($_POST['order_id'] ?? 0);
     $new_status = trim($_POST['status'] ?? 'Pending');
@@ -61,7 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
         if ($stmt) {
             $stmt->bind_param("si", $new_status, $order_id);
             if ($stmt->execute()) {
-                $notice = "Order #$order_id status updated to '$new_status'.";
+                if ($new_status === 'Completed') {
+                    $notice = "Order #$order_id marked as Completed and moved to Order History.";
+                } else {
+                    $notice = "Order #$order_id status updated to '$new_status'.";
+                }
             } else {
                 $error = "Failed to update order status.";
             }
@@ -70,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     }
 }
 
-// --- DELETE: Delete Order ---
+// --- DELETE: Delete Order ---[cite: 12]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     $order_id = (int)($_POST['order_id'] ?? 0);
     $stmt = $conn->prepare("DELETE FROM orders WHERE id = ?");
@@ -85,9 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     }
 }
 
-// --- READ: Retrieve all orders ---
+// --- READ: Retrieve ONLY active orders (Completed orders are hidden here and kept in History) ---
 $orders = [];
-$res = $conn->query("SELECT * FROM orders ORDER BY id DESC");
+$res = $conn->query("SELECT * FROM orders WHERE status != 'Completed' ORDER BY id DESC");
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $orders[] = $row;
@@ -99,7 +103,7 @@ if ($res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders Management - Cheesecake Delight Admin</title>
+    <title>Active Orders Queue - Cheesecake Delight Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
@@ -175,20 +179,6 @@ if ($res) {
             background: #fff;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 800;
-        }
-
-        .status-Pending { background: #fff3cd; color: #856404; }
-        .status-Processing { background: #cce5ff; color: #004085; }
-        .status-Completed { background: #d4edda; color: #155724; }
-        .status-Cancelled { background: #f8d7da; color: #721c24; }
-
-        /* Payment Badges */
         .badge-pay {
             display: inline-flex;
             align-items: center;
@@ -292,8 +282,8 @@ if ($res) {
         <div class="admin-card">
             <div class="top-flex">
                 <div>
-                    <h1 class="cart-title" style="margin-bottom: 4px; text-align: left;">Customer Orders</h1>
-                    <p style="color: #6d6260; font-size: 13.5px;">Track incoming orders, change shipment status, and monitor customer payment methods.</p>
+                    <h1 class="cart-title" style="margin-bottom: 4px; text-align: left;">Active Orders Queue</h1>
+                    <p style="color: #6d6260; font-size: 13.5px;">Pending and processing orders. Marking an order as <strong>Completed</strong> moves it to <a href="admin_history.php" style="color: #e65275; font-weight: 700; text-decoration: underline;">Order History</a>.</p>
                 </div>
                 <button type="button" class="btn-action btn-update" style="padding: 10px 18px; font-size: 13px;" onclick="toggleOrderForm()">
                     <i class="fa-solid fa-plus"></i> Manual Order
@@ -330,7 +320,6 @@ if ($res) {
                         <select name="status">
                             <option value="Pending">Pending</option>
                             <option value="Processing">Processing</option>
-                            <option value="Completed">Completed</option>
                             <option value="Cancelled">Cancelled</option>
                         </select>
                     </div>
@@ -340,7 +329,11 @@ if ($res) {
 
             <!-- READ, UPDATE, DELETE Table -->
             <?php if (empty($orders)): ?>
-                <p style="text-align: center; padding: 30px; color: #8c7b74; font-weight: 600;">No orders found.</p>
+                <div style="text-align: center; padding: 40px 20px; color: #8c7b74;">
+                    <i class="fa-regular fa-circle-check" style="font-size: 38px; color: #27ae60; margin-bottom: 10px;"></i>
+                    <p style="font-weight: 700;">No active pending orders.</p>
+                    <p style="font-size: 12.5px; margin-top: 4px;">All completed orders can be reviewed in <a href="admin_history.php" style="color: #e65275; font-weight: 700;">Order History</a>.</p>
+                </div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
                     <table class="orders-table">
@@ -396,7 +389,7 @@ if ($res) {
                                             <select name="status" class="status-select">
                                                 <option value="Pending" <?php echo $current_status === 'Pending' ? 'selected' : ''; ?>>Pending</option>
                                                 <option value="Processing" <?php echo $current_status === 'Processing' ? 'selected' : ''; ?>>Processing</option>
-                                                <option value="Completed" <?php echo $current_status === 'Completed' ? 'selected' : ''; ?>>Completed</option>
+                                                <option value="Completed">Completed</option>
                                                 <option value="Cancelled" <?php echo $current_status === 'Cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                             </select>
                                             <button type="submit" name="update_status" class="btn-action btn-update" title="Save Status">Save</button>
