@@ -2,17 +2,17 @@
 session_start();
 require_once 'db.php';
 
-// Security Guard: Only authenticated administrators can access[cite: 3]
+// Security Guard: Only authenticated administrators can access
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit;
 }
 
-// Handle Admin Logout[cite: 3]
+// Handle Admin Logout
 if (isset($_GET['logout'])) {
     unset($_SESSION['is_admin']);
     unset($_SESSION['admin_user']);
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit;
 }
 

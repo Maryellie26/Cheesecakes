@@ -4,7 +4,7 @@ require_once 'db.php';
 
 // Security Guard: Restrict access to authenticated administrators only
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit;
 }
 

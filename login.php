@@ -2,68 +2,70 @@
 session_start();
 require_once 'db.php';
 
-// --- Validation Helper Functions (Reference Style) ---
-function validateRequired(string $value, string $label): ?string
-{
-    return trim($value) === '' ? "$label is required." : null;
+// Redirect if already logged in
+if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true) {
+    header("Location: admin_dashboard.php");
+    exit;
 }
-
-function validateEmailFormat(string $value): ?string
-{
-    if (trim($value) === '') {
-        return "Email is required.";
-    }
-    return filter_var($value, FILTER_VALIDATE_EMAIL) ? null : "Enter a valid email address.";
-}
-
-function validateLoginInput(array $post): array
-{
-    $email    = trim($post['email'] ?? '');
-    $password = $post['password'] ?? '';
-
-    $errors = array_filter([
-        validateEmailFormat($email),
-        validateRequired($password, 'Password'),
-    ]);
-
-    return [
-        'errors' => array_values($errors),
-        'data'   => ['email' => $email, 'password' => $password],
-    ];
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
 }
 
 $errors = [];
 
-// Handle Form Submission
+// Handle Login Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
-    $validation = validateLoginInput($_POST);
-    $errors     = $validation['errors'];
-    $data       = $validation['data'];
+    $login_input = trim($_POST['email'] ?? '');
+    $password    = $_POST['password'] ?? '';
+
+    if ($login_input === '') {
+        $errors[] = "Email or username is required.";
+    }
+    if ($password === '') {
+        $errors[] = "Password is required.";
+    }
 
     if (empty($errors)) {
-        $stmt = $conn->prepare("SELECT id, fullname, password FROM users WHERE email = ?");
-        $stmt->bind_param("s", $data['email']);
-        $stmt->execute();
-        $stmt->store_result();
+        // --- 1. ADMIN CREDENTIALS CHECK ---
+        $ADMIN_USER = 'Marielle';
+        $ADMIN_PASS = 'admin123';
 
-        if ($stmt->num_rows === 1) {
-            $stmt->bind_result($id, $fullname, $hashed_password);
-            $stmt->fetch();
-
-            if (password_verify($data['password'], $hashed_password)) {
-                $_SESSION['user_id']    = $id;
-                $_SESSION['user_email'] = $data['email'];
-                $_SESSION['username']   = $fullname;
-
-                header("Location: index.php");
-                exit;
-            } else {
-                $errors[] = "Incorrect password.";
-            }
-        } else {
-            $errors[] = "No account found with that email.";
+        if (($login_input === $ADMIN_USER || strtolower($login_input) === 'admin@cheesecake.com') && $password === $ADMIN_PASS) {
+            $_SESSION['is_admin']   = true;
+            $_SESSION['admin_user'] = $ADMIN_USER;
+            header("Location: admin_dashboard.php");
+            exit;
         }
-        $stmt->close();
+
+        // --- 2. CUSTOMER / USER DATABASE CHECK ---
+        $stmt = $conn->prepare("SELECT id, fullname, email, password FROM users WHERE email = ? OR fullname = ?");
+        if ($stmt) {
+            $stmt->bind_param("ss", $login_input, $login_input);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if ($stmt->num_rows === 1) {
+                $stmt->bind_result($id, $fullname, $email, $hashed_password);
+                $stmt->fetch();
+
+                if (password_verify($password, $hashed_password)) {
+                    $_SESSION['user_id']    = $id;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['username']   = $fullname;
+
+                    header("Location: index.php");
+                    exit;
+                } else {
+                    $errors[] = "Incorrect password.";
+                }
+            } else {
+                $errors[] = "No account found with that email or username.";
+            }
+            $stmt->close();
+        } else {
+            $errors[] = "Database query error. Please try again.";
+        }
     }
 }
 ?>
@@ -444,6 +446,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             background-color: #f77290;
             width: 100%;
             flex-shrink: 0;
+            margin-top: auto;
         }
 
         @media (max-width: 900px) {
@@ -507,7 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             </div>
 
             <h1 class="card-heading">Welcome Back!</h1>
-            <p class="card-subtext">Log in to continue to your account</p>
+            <p class="card-subtext">Log in to access your account or dashboard</p>
 
             <?php if (!empty($errors)): ?>
                 <div class="error-banner">
@@ -521,10 +524,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
             <form method="POST" action="login.php" class="auth-form">
                 <div class="input-block">
-                    <label for="email">Email</label>
+                    <label for="email">Email or Username</label>
                     <div class="input-field-wrap">
                         <i class="fa-regular fa-envelope input-icon-left"></i>
-                        <input type="email" id="email" name="email" placeholder="Enter your email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
+                        <input type="text" id="email" name="email" placeholder="Enter your email or username" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
                     </div>
                 </div>
 
