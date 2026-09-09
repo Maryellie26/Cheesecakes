@@ -170,6 +170,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             color: #ba2348;
             border: 1px solid #f7b4c4;
         }
+        .footer-bar {
+            height: 70px;
+            background-color: #f77290;
+            width: 100%;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
 
         @media (max-width: 480px) {
             .form-row-split {
@@ -242,5 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
             </form>
         </div>
     </main>
+
+    <div class="footer-bar"></div>
 </body>
 </html>
