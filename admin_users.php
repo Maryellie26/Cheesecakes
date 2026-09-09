@@ -2,16 +2,24 @@
 session_start();
 require_once 'db.php';
 
-// Security Guard: Authenticated administrators only
+// Security Guard: Authenticated administrators only[cite: 14]
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin_login.php");
+    header("Location: login.php");
+    exit;
+}
+
+// Handle Admin Logout
+if (isset($_GET['logout'])) {
+    unset($_SESSION['is_admin']);
+    unset($_SESSION['admin_user']);
+    header("Location: login.php");
     exit;
 }
 
 $notice = '';
 $error = '';
 
-// --- CREATE: Manually Add User ---
+// --- CREATE: Manually Add User ---[cite: 14]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $fullname = trim($_POST['fullname'] ?? '');
     $email    = trim($_POST['email'] ?? '');
@@ -42,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     }
 }
 
-// --- UPDATE: Edit User Details ---
+// --- UPDATE: Edit User Details ---[cite: 14]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     $user_id  = (int)($_POST['user_id'] ?? 0);
     $fullname = trim($_POST['fullname'] ?? '');
@@ -76,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     }
 }
 
-// --- DELETE: Delete User ---
+// --- DELETE: Delete User ---[cite: 14]
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $user_id = (int)($_POST['user_id'] ?? 0);
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
@@ -91,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     }
 }
 
-// --- READ: Retrieve All Users ---
+// --- READ: Retrieve All Users ---[cite: 14]
 $users = [];
 $res = $conn->query("SELECT id, fullname, email, created_at FROM users ORDER BY id DESC");
 if ($res) {
@@ -110,8 +118,18 @@ if ($res) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .admin-wrap {
-            min-height: 88vh;
+            flex: 1;
             padding: 40px 20px;
             display: flex;
             justify-content: center;
@@ -119,7 +137,9 @@ if ($res) {
             background-image: url('images/cheesecakebgg.png');
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
         }
+
         .admin-card {
             background: #fffdf5;
             max-width: 1100px;
@@ -129,6 +149,7 @@ if ($res) {
             box-shadow: 0 10px 30px rgba(0,0,0,0.06);
             border: 1.5px solid #fce3ea;
         }
+
         .top-flex {
             display: flex;
             justify-content: space-between;
@@ -137,11 +158,13 @@ if ($res) {
             flex-wrap: wrap;
             gap: 12px;
         }
+
         .users-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
+
         .users-table th, .users-table td {
             padding: 12px 14px;
             text-align: left;
@@ -149,11 +172,13 @@ if ($res) {
             font-size: 13.5px;
             vertical-align: middle;
         }
+
         .users-table th {
             color: #e65275;
             font-weight: 800;
             background: #fff5f7;
         }
+
         .input-tbl {
             padding: 7px 10px;
             border-radius: 8px;
@@ -161,7 +186,9 @@ if ($res) {
             font-size: 13px;
             outline: none;
             width: 100%;
+            box-sizing: border-box;
         }
+
         .btn-act {
             border: none;
             border-radius: 8px;
@@ -171,6 +198,7 @@ if ($res) {
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .btn-save { background-color: #ff709b; color: #fff; }
         .btn-save:hover { background-color: #e8507c; }
         .btn-del { background: #fff0f4; border: 1px solid #f7b4c4; color: #d13d60; }
@@ -184,18 +212,29 @@ if ($res) {
             border-radius: 16px;
             margin-bottom: 25px;
         }
+
         .grid-inputs {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
             margin-bottom: 12px;
         }
+
         .grid-inputs input {
             width: 100%;
             padding: 9px 12px;
             border: 1px solid #f3d1db;
             border-radius: 8px;
             font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .footer-bar {
+            height: 70px;
+            background-color: #f77290;
+            width: 100%;
+            flex-shrink: 0;
+            margin-top: auto;
         }
     </style>
 </head>
@@ -210,10 +249,11 @@ if ($res) {
             <a href="admin_dashboard.php" class="nav-item">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item">INVENTORY</a>
             <a href="admin_orders.php" class="nav-item">ORDERS</a>
+            <a href="admin_history.php" class="nav-item">HISTORY</a>
             <a href="admin_users.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">USERS</a>
             <a href="admin_messages.php" class="nav-item">MESSAGES</a>
             <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
-            <a href="admin_inventory.php?logout=1" class="nav-item" style="color: #ffd6df;">LOGOUT</a>
+            <a href="admin_users.php?logout=1" class="nav-item" style="color: #ffd6df;">LOGOUT</a>
         </nav>
     </header>
 
@@ -258,50 +298,54 @@ if ($res) {
             <?php if (empty($users)): ?>
                 <p style="text-align: center; padding: 30px; color: #8c7b74; font-weight: 600;">No registered users found.</p>
             <?php else: ?>
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 8%;">#ID</th>
-                            <th style="width: 25%;">Full Name</th>
-                            <th style="width: 28%;">Email</th>
-                            <th style="width: 22%;">Reset Password</th>
-                            <th style="width: 17%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($users as $u): ?>
+                <div style="overflow-x: auto;">
+                    <table class="users-table">
+                        <thead>
                             <tr>
-                                <td><strong>#<?php echo $u['id']; ?></strong></td>
-                                <!-- UPDATE Form -->
-                                <form method="POST" action="admin_users.php">
-                                    <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
-                                    <td>
-                                        <input type="text" name="fullname" value="<?php echo htmlspecialchars($u['fullname']); ?>" class="input-tbl" required>
-                                    </td>
-                                    <td>
-                                        <input type="email" name="email" value="<?php echo htmlspecialchars($u['email']); ?>" class="input-tbl" required>
-                                    </td>
-                                    <td>
-                                        <input type="password" name="new_password" placeholder="Leave blank to keep" class="input-tbl">
-                                    </td>
-                                    <td style="white-space: nowrap;">
-                                        <button type="submit" name="update_user" class="btn-act btn-save" title="Save changes">Save</button>
-                                </form>
-                                        <!-- DELETE Form -->
-                                        <form method="POST" action="admin_users.php" style="display:inline;" onsubmit="return confirm('Delete user account #<?php echo $u['id']; ?>?');">
-                                            <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
-                                            <button type="submit" name="delete_user" class="btn-act btn-del" title="Delete User">
-                                                <i class="fa-regular fa-trash-can"></i>
-                                            </button>
-                                        </form>
-                                    </td>
+                                <th style="width: 8%;">#ID</th>
+                                <th style="width: 25%;">Full Name</th>
+                                <th style="width: 28%;">Email</th>
+                                <th style="width: 22%;">Reset Password</th>
+                                <th style="width: 17%;">Actions</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($users as $u): ?>
+                                <tr>
+                                    <td><strong>#<?php echo $u['id']; ?></strong></td>
+                                    <!-- UPDATE Form -->
+                                    <form method="POST" action="admin_users.php">
+                                        <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
+                                        <td>
+                                            <input type="text" name="fullname" value="<?php echo htmlspecialchars($u['fullname']); ?>" class="input-tbl" required>
+                                        </td>
+                                        <td>
+                                            <input type="email" name="email" value="<?php echo htmlspecialchars($u['email']); ?>" class="input-tbl" required>
+                                        </td>
+                                        <td>
+                                            <input type="password" name="new_password" placeholder="Leave blank to keep" class="input-tbl">
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <button type="submit" name="update_user" class="btn-act btn-save" title="Save changes">Save</button>
+                                    </form>
+                                            <!-- DELETE Form -->
+                                            <form method="POST" action="admin_users.php" style="display:inline;" onsubmit="return confirm('Delete user account #<?php echo $u['id']; ?>?');">
+                                                <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
+                                                <button type="submit" name="delete_user" class="btn-act btn-del" title="Delete User">
+                                                    <i class="fa-regular fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </main>
+
+    <div class="footer-bar"></div>
 
     <script>
         function toggleUserForm() {

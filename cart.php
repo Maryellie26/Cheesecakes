@@ -121,7 +121,7 @@ $grand_total  = $subtotal > 0 ? ($subtotal + $shipping_fee) : 0.00;
 
         body {
             background-color: #fbe6b5;
-            background-image: url('images/aboutusbg.png');
+            background-image: url('images/cakebg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
