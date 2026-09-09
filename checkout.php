@@ -2,6 +2,9 @@
 session_start();
 require_once 'db.php';
 
+// Ensure payment_method column exists in orders table
+$conn->query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery'");
+
 // Redirect to login if user is not signed in
 if (!isset($_SESSION['user_email'])) {
     header("Location: login.php");
@@ -24,13 +27,24 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
-    $fullname = trim($_POST['fullname'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $phone    = trim($_POST['phone'] ?? '');
-    $address  = trim($_POST['address'] ?? '');
+    $fullname       = trim($_POST['fullname'] ?? '');
+    $email          = trim($_POST['email'] ?? '');
+    $phone          = trim($_POST['phone'] ?? '');
+    $address        = trim($_POST['address'] ?? '');
+    $payment_method = trim($_POST['payment_method'] ?? 'Cash on Delivery');
+    $gcash_ref      = trim($_POST['gcash_reference'] ?? '');
 
     if ($fullname === '' || $email === '' || $address === '' || $phone === '') {
         $errors[] = "Please fill in all mandatory billing and shipping fields.";
+    }
+
+    if ($payment_method === 'GCash' && empty($gcash_ref)) {
+        $errors[] = "Please provide your GCash Reference Number.";
+    }
+
+    $final_payment = $payment_method;
+    if ($payment_method === 'GCash' && !empty($gcash_ref)) {
+        $final_payment = "GCash (Ref: " . $gcash_ref . ")";
     }
 
     if (empty($errors)) {
@@ -63,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 $update_stmt->close();
             }
 
-            // Insert into orders table
-            $stmt = $conn->prepare("INSERT INTO orders (user_id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("issssddds", $user_id, $fullname, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json);
+            // Insert into orders table with payment_method
+            $stmt = $conn->prepare("INSERT INTO orders (user_id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("issssdddss", $user_id, $fullname, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json, $final_payment);
             $stmt->execute();
             $stmt->close();
 
@@ -91,6 +105,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
+    <style>
+        .payment-options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+            margin-bottom: 12px;
+        }
+
+        .payment-choice-card {
+            border: 2px solid #f3d1db;
+            border-radius: 14px;
+            padding: 14px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .payment-choice-card input[type="radio"] {
+            accent-color: #f76e8e;
+            width: 18px;
+            height: 18px;
+        }
+
+        .payment-choice-card:hover {
+            border-color: #f76e8e;
+            background: #fff8f9;
+        }
+
+        .payment-choice-card.active {
+            border-color: #f76e8e;
+            background: #fff3f6;
+        }
+
+        .payment-choice-details strong {
+            display: block;
+            font-size: 13.5px;
+            color: #433935;
+        }
+
+        .payment-choice-details span {
+            font-size: 11.5px;
+            color: #795548;
+        }
+
+        .gcash-info-box {
+            display: none;
+            background: #eef6ff;
+            border: 1.5px solid #bddbff;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 6px;
+            margin-bottom: 15px;
+        }
+
+        .gcash-info-box p {
+            font-size: 12.5px;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .gcash-info-box strong {
+            color: #0d47a1;
+        }
+    </style>
 </head>
 <body>
 
@@ -152,6 +235,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <textarea id="address" name="address" rows="3" required placeholder="House number, Street, Barangay, City"></textarea>
                         </div>
 
+                        <h2 style="margin-top: 25px;">Payment Method</h2>
+                        <div class="payment-options-grid">
+                            <label class="payment-choice-card active" id="label-cod">
+                                <input type="radio" name="payment_method" value="Cash on Delivery" checked onclick="togglePaymentMethod('cod')">
+                                <div class="payment-choice-details">
+                                    <strong><i class="fa-solid fa-money-bill-wave" style="color: #27ae60;"></i> Cash on Delivery</strong>
+                                    <span>Pay with cash upon arrival</span>
+                                </div>
+                            </label>
+
+                            <label class="payment-choice-card" id="label-gcash">
+                                <input type="radio" name="payment_method" value="GCash" onclick="togglePaymentMethod('gcash')">
+                                <div class="payment-choice-details">
+                                    <strong><i class="fa-solid fa-mobile-screen-button" style="color: #007dfe;"></i> GCash</strong>
+                                    <span>Fast e-wallet transfer</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- GCash Transfer Info Box -->
+                        <div id="gcashBox" class="gcash-info-box">
+                            <p>
+                                <strong>GCash Account:</strong> 0967 534 5725<br>
+                                <strong>Account Name:</strong> Cheesecake Delight
+                            </p>
+                            <div class="input-block" style="margin-bottom: 0;">
+                                <label for="gcash_reference" style="color: #0d47a1;">GCash Reference Number (Optional / Upon Sending)</label>
+                                <input type="text" id="gcash_reference" name="gcash_reference" placeholder="e.g. 100234567890">
+                            </div>
+                        </div>
+
                         <button type="submit" name="place_order" class="btn-proceed-checkout" style="margin-top: 15px;">Place Order Now</button>
                     </form>
 
@@ -185,5 +299,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     </main>
 
     <div class="footer-bar"></div>
+
+    <script>
+        function togglePaymentMethod(method) {
+            const gcashBox = document.getElementById('gcashBox');
+            const labelCod = document.getElementById('label-cod');
+            const labelGcash = document.getElementById('label-gcash');
+
+            if (method === 'gcash') {
+                gcashBox.style.display = 'block';
+                labelGcash.classList.add('active');
+                labelCod.classList.remove('active');
+            } else {
+                gcashBox.style.display = 'none';
+                labelCod.classList.add('active');
+                labelGcash.classList.remove('active');
+            }
+        }
+    </script>
 </body>
 </html>

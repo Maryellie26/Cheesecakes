@@ -2,36 +2,37 @@
 session_start();
 require_once 'db.php';
 
-// Security Guard: Restrict access to authenticated administrators only
+// Security Guard: Restrict access to authenticated administrators only[cite: 7]
 if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header("Location: admin_login.php");
+    header("Location: login.php");
     exit;
 }
 
 $notice = '';
 $error  = '';
 
-// Ensure status column exists in orders table
+// Ensure necessary columns exist in orders table[cite: 7]
 $conn->query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status VARCHAR(50) NOT NULL DEFAULT 'Completed'");
+$conn->query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery'");
 
 // ==========================================
-// C - CREATE: Manual Order Entry
+// C - CREATE: Manual Order Entry[cite: 7]
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_order'])) {
-    $cust_name = trim($_POST['customer_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-    $phone     = trim($_POST['phone'] ?? '');
-    $address   = trim($_POST['address'] ?? '');
-    $status    = trim($_POST['status'] ?? 'Completed');
-    $item_name = trim($_POST['item_name'] ?? 'Cheesecake Order');
-    $qty       = max(1, (int)($_POST['qty'] ?? 1));
-    $price     = max(0.00, (float)($_POST['price'] ?? 180.00));
+    $cust_name      = trim($_POST['customer_name'] ?? '');
+    $email          = trim($_POST['email'] ?? '');
+    $phone          = trim($_POST['phone'] ?? '');
+    $address        = trim($_POST['address'] ?? '');
+    $status         = trim($_POST['status'] ?? 'Completed');
+    $payment_method = trim($_POST['payment_method'] ?? 'Cash on Delivery');
+    $item_name      = trim($_POST['item_name'] ?? 'Cheesecake Order');
+    $qty            = max(1, (int)($_POST['qty'] ?? 1));
+    $price          = max(0.00, (float)($_POST['price'] ?? 180.00));
     
     $subtotal     = $price * $qty;
     $shipping_fee = 50.00;
     $grand_total  = $subtotal + $shipping_fee;
 
-    // Build standard JSON items structure
     $items_array = [
         [
             'name'  => $item_name,
@@ -42,9 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_order'])) {
     $order_items_json = json_encode($items_array);
 
     if (!empty($cust_name) && !empty($email) && !empty($phone) && !empty($address)) {
-        $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO orders (customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items, status, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         if ($stmt) {
-            $stmt->bind_param("ssssdddss", $cust_name, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json, $status);
+            $stmt->bind_param("ssssdddsss", $cust_name, $email, $phone, $address, $subtotal, $shipping_fee, $grand_total, $order_items_json, $status, $payment_method);
             if ($stmt->execute()) {
                 $notice = "New order successfully recorded.";
             } else {
@@ -58,19 +59,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_order'])) {
 }
 
 // ==========================================
-// U - UPDATE: Modify Order Details or Status
+// U - UPDATE: Modify Order Details or Status[cite: 7]
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order'])) {
-    $order_id  = (int)($_POST['order_id'] ?? 0);
-    $status    = trim($_POST['status'] ?? 'Completed');
-    $cust_name = trim($_POST['customer_name'] ?? '');
-    $phone     = trim($_POST['phone'] ?? '');
-    $address   = trim($_POST['address'] ?? '');
+    $order_id       = (int)($_POST['order_id'] ?? 0);
+    $status         = trim($_POST['status'] ?? 'Completed');
+    $payment_method = trim($_POST['payment_method'] ?? 'Cash on Delivery');
+    $cust_name      = trim($_POST['customer_name'] ?? '');
+    $phone          = trim($_POST['phone'] ?? '');
+    $address        = trim($_POST['address'] ?? '');
 
     if ($order_id > 0 && !empty($cust_name)) {
-        $stmt = $conn->prepare("UPDATE orders SET status = ?, customer_name = ?, phone = ?, address = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE orders SET status = ?, payment_method = ?, customer_name = ?, phone = ?, address = ? WHERE id = ?");
         if ($stmt) {
-            $stmt->bind_param("ssssi", $status, $cust_name, $phone, $address, $order_id);
+            $stmt->bind_param("sssssi", $status, $payment_method, $cust_name, $phone, $address, $order_id);
             if ($stmt->execute()) {
                 $notice = "Order #$order_id updated successfully.";
             } else {
@@ -82,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order'])) {
 }
 
 // ==========================================
-// D - DELETE: Remove Order History Record
+// D - DELETE: Remove Order History Record[cite: 7]
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
     $order_id = (int)($_POST['order_id'] ?? 0);
@@ -101,12 +103,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order'])) {
 }
 
 // ==========================================
-// R - READ: Fetch Order History
+// R - READ: Fetch Order History[cite: 7]
 // ==========================================
 $orders = [];
 $filter_status = trim($_GET['status_filter'] ?? 'all');
 
-$sql = "SELECT id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items, status, created_at FROM orders";
+$sql = "SELECT id, customer_name, email, phone, address, subtotal, shipping_fee, total_amount, order_items, status, payment_method, created_at FROM orders";
 if ($filter_status !== 'all' && !empty($filter_status)) {
     $sql .= " WHERE status = '" . $conn->real_escape_string($filter_status) . "'";
 }
@@ -157,7 +159,7 @@ if ($res) {
 
         .admin-card {
             background: #fffdf5;
-            max-width: 1200px;
+            max-width: 1250px;
             width: 100%;
             border-radius: 30px;
             padding: 40px;
@@ -212,7 +214,6 @@ if ($res) {
             background-color: #e55a7b;
         }
 
-        /* Order Table */
         .orders-table {
             width: 100%;
             border-collapse: collapse;
@@ -266,6 +267,28 @@ if ($res) {
             border: 1px solid #ffcdd2;
         }
 
+        /* Payment Badges */
+        .badge-pay {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .badge-cod {
+            background: #e8f8f0;
+            color: #1e824c;
+            border: 1px solid #a3e9be;
+        }
+
+        .badge-gcash {
+            background: #eef6ff;
+            color: #0b5ed7;
+            border: 1px solid #bddbff;
+        }
+
         .items-bullet-list {
             list-style: none;
             padding: 0;
@@ -312,7 +335,7 @@ if ($res) {
             color: #ffffff;
         }
 
-        /* Modal Overlay for Create / Edit Form */
+        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -398,6 +421,10 @@ if ($res) {
         }
 
         .footer-bar {
+            height: 70px;
+            background-color: #f77290;
+            width: 100%;
+            flex-shrink: 0;
             margin-top: auto;
         }
     </style>
@@ -412,8 +439,10 @@ if ($res) {
         <nav class="nav-links">
             <a href="admin_dashboard.php" class="nav-item">DASHBOARD</a>
             <a href="admin_inventory.php" class="nav-item">INVENTORY</a>
+            <a href="admin_orders.php" class="nav-item">ORDERS</a>
+            <a href="admin_history.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">HISTORY</a>
+            <a href="admin_users.php" class="nav-item">USERS</a>
             <a href="admin_messages.php" class="nav-item">MESSAGES</a>
-            <a href="admin_history.php" class="nav-item" style="border-bottom: 2px solid #ffffff;">ORDERS</a>
             <a href="Index.php" class="nav-item" target="_blank">STOREFRONT <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px;"></i></a>
             <a href="admin_inventory.php?logout=1" class="nav-item" style="color: #ffd6df;">LOGOUT</a>
         </nav>
@@ -423,7 +452,7 @@ if ($res) {
         <div class="admin-card">
             <h1 class="cart-title" style="margin-bottom: 6px;">Order History &amp; Tracking</h1>
             <p style="text-align: center; color: #6d6260; font-size: 14px; margin-bottom: 10px;">
-                Track completed, pending, and past customer orders.
+                Track completed orders, customer delivery info, and payment methods.
             </p>
 
             <?php if ($notice): ?>
@@ -470,6 +499,7 @@ if ($res) {
                                 <th>Order #</th>
                                 <th>Customer Details</th>
                                 <th>Items Ordered</th>
+                                <th>Payment Method</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Date Placed</th>
@@ -483,6 +513,9 @@ if ($res) {
                                 if ($status === 'Processing') $badge_class = 'badge-processing';
                                 if ($status === 'Pending') $badge_class = 'badge-pending';
                                 if ($status === 'Cancelled') $badge_class = 'badge-cancelled';
+
+                                $pay_method = $ord['payment_method'] ?? 'Cash on Delivery';
+                                $is_gcash = stripos($pay_method, 'GCash') !== false;
 
                                 $items = json_decode($ord['order_items'], true) ?? [];
                             ?>
@@ -502,6 +535,12 @@ if ($res) {
                                         </ul>
                                     </td>
                                     <td>
+                                        <span class="badge-pay <?php echo $is_gcash ? 'badge-gcash' : 'badge-cod'; ?>">
+                                            <i class="<?php echo $is_gcash ? 'fa-solid fa-mobile-screen-button' : 'fa-solid fa-money-bill-wave'; ?>"></i>
+                                            <?php echo htmlspecialchars($pay_method); ?>
+                                        </span>
+                                    </td>
+                                    <td>
                                         <strong style="color: #ff5983;">&#8369;<?php echo number_format($ord['total_amount'], 2); ?></strong>
                                     </td>
                                     <td>
@@ -514,7 +553,7 @@ if ($res) {
                                     </td>
                                     <td>
                                         <div class="table-actions">
-                                            <button type="button" class="btn-action-icon btn-action-edit" title="Edit Order Status" onclick='openEditModal(<?php echo json_encode($ord); ?>)'>
+                                            <button type="button" class="btn-action-icon btn-action-edit" title="Edit Order Status &amp; Details" onclick='openEditModal(<?php echo json_encode($ord); ?>)'>
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
                                             <form method="POST" action="admin_history.php" onsubmit="return confirm('Permanently delete order #<?php echo $ord['id']; ?>?');" style="display:inline;">
@@ -572,14 +611,23 @@ if ($res) {
                         <input type="number" step="0.01" id="create_price" name="price" value="180.00" required>
                     </div>
                 </div>
-                <div class="form-row">
-                    <label for="create_status">Order Status</label>
-                    <select id="create_status" name="status">
-                        <option value="Completed">Completed</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-row" style="flex: 1;">
+                        <label for="create_pay">Payment Method</label>
+                        <select id="create_pay" name="payment_method">
+                            <option value="Cash on Delivery">Cash on Delivery</option>
+                            <option value="GCash">GCash</option>
+                        </select>
+                    </div>
+                    <div class="form-row" style="flex: 1;">
+                        <label for="create_status">Order Status</label>
+                        <select id="create_status" name="status">
+                            <option value="Completed">Completed</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
                 </div>
                 <button type="submit" name="create_order" class="btn-modal-save">Save Order</button>
             </form>
@@ -590,19 +638,25 @@ if ($res) {
     <div id="editModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h2>Edit Order Status &amp; Info</h2>
+                <h2>Edit Order Status &amp; Details</h2>
                 <button type="button" class="close-modal-btn" onclick="closeEditModal()">&times;</button>
             </div>
             <form method="POST" action="admin_history.php">
                 <input type="hidden" id="edit_id" name="order_id">
-                <div class="form-row">
-                    <label for="edit_status">Order Status</label>
-                    <select id="edit_status" name="status">
-                        <option value="Completed">Completed</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-row" style="flex: 1;">
+                        <label for="edit_status">Order Status</label>
+                        <select id="edit_status" name="status">
+                            <option value="Completed">Completed</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-row" style="flex: 1;">
+                        <label for="edit_pay">Payment Method</label>
+                        <input type="text" id="edit_pay" name="payment_method" required>
+                    </div>
                 </div>
                 <div class="form-row">
                     <label for="edit_name">Customer Name</label>
@@ -634,6 +688,7 @@ if ($res) {
         function openEditModal(order) {
             document.getElementById('edit_id').value = order.id;
             document.getElementById('edit_status').value = order.status || 'Completed';
+            document.getElementById('edit_pay').value = order.payment_method || 'Cash on Delivery';
             document.getElementById('edit_name').value = order.customer_name || '';
             document.getElementById('edit_phone').value = order.phone || '';
             document.getElementById('edit_address').value = order.address || '';
@@ -643,7 +698,6 @@ if ($res) {
             document.getElementById('editModal').style.display = 'none';
         }
 
-        // Close on backdrop click
         window.onclick = function(e) {
             if (e.target.classList.contains('modal-overlay')) {
                 closeCreateModal();
