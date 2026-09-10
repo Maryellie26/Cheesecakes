@@ -1,8 +1,5 @@
 <?php
-// Initialize session handling to access and set user/admin login states across requests[cite: 15]
 session_start();
-
-// Include the database connection configuration file[cite: 15]
 require_once 'db.php';
 
 // --- SESSION ACCESS GUARDS ---
