@@ -76,7 +76,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* --- Top-Right Action Icons & Sign In Button --- */
 .nav-icons {
     position: absolute;
     right: 48px;
@@ -105,7 +104,6 @@ body {
     position: relative;
 }
 
-/* White Pill Button with Pink Text */
 .btn-signin {
     background-color: #ffffff;
     color: #f77290;
@@ -128,7 +126,6 @@ body {
     background-color: #fffafb;
 }
 
-/* --- Shared Buttons --- */
 .btn {
     text-decoration: none;
     padding: 12px 30px;
@@ -156,7 +153,6 @@ body {
     color: #f76e8e;
 }
 
-/* --- Shared Section Titles --- */
 .section-title {
     text-align: center;
     font-family: 'Anton', sans-serif;
@@ -389,7 +385,7 @@ body {
     min-height: 100vh;
     padding: 80px 20px;
     background-color: #fbf1b3;
-    background-image: url('images/cheesecakebgg.png');
+    background-image: url('images/menuh.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -459,7 +455,6 @@ body {
     flex-grow: 1;
 }
 
-/* --- Menu Item Action Controls: Pushed to Right Edge --- */
 .card-footer {
     display: flex;
     align-items: center;
@@ -482,7 +477,6 @@ body {
     margin-left: auto;
 }
 
-/* Pink Stepper Box: [- 1 +] */
 .stepper-box {
     display: inline-flex;
     align-items: center;
@@ -533,7 +527,6 @@ body {
     margin: 0;
 }
 
-/* Pink Add to Cart Pill Button with Cart Icon */
 .add-cart-pill-btn {
     background-color: #ff709b;
     color: #ffffff;
@@ -556,7 +549,6 @@ body {
     transform: translateY(-1px);
 }
 
-/* Floating Bottom Cart Bar */
 .floating-cart-bar {
     position: fixed;
     bottom: 24px;
@@ -759,39 +751,86 @@ body {
     display: block;
 }
 
-/* --- SECTION 5: CONTACT --- */
+/* =========================================
+   SECTION 5: CONTACT (MOVED HIGHER UP)
+========================================= */
 .contact-section {
     min-height: 100vh;
-    padding: 80px 40px;
+    padding: 30px 40px 60px 40px;
     background-color: #fbe6b5;
-    background-image: url('images/contactusbg.png');
+    background-image: url('images/kontak.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .contact-container {
-    max-width: 1200px;
+    max-width: 1100px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+.decor-title-box {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+.center-heart {
+    color: #f76e8e;
+    font-size: 24px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.title-with-rays {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.pink-rays {
+    color: #f76e8e;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.main-contact-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 40px;
+    font-weight: 900;
+    color: #f7557d;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.script-subtitle {
+    font-family: 'Caveat', cursive, 'Poppins', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #63534d;
+    margin-top: 2px;
+}
+
 .contact-content {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
-    gap: 50px;
+    gap: 40px;
 }
 
 .contact-left {
     flex: 1;
-    position: relative;
+    max-width: 380px;
     display: flex;
     flex-direction: column;
 }
@@ -800,15 +839,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 380px;
-    z-index: 2;
+    width: 100%;
 }
 
 .info-card {
     background: #fffdf5;
     border: 1.5px solid #f9cad7;
     border-radius: 20px;
-    padding: 12px 20px;
+    padding: 14px 20px;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -818,18 +856,18 @@ body {
 .icon-circle {
     width: 44px;
     height: 44px;
-    background-color: #ffdce6;
-    color: #f76e8e;
+    background: linear-gradient(135deg, #ff8da6 0%, #f76e8e 100%);
+    color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 17px;
     flex-shrink: 0;
 }
 
 .info-details h3 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     color: #f76e8e;
     margin-bottom: 2px;
@@ -839,21 +877,7 @@ body {
     font-size: 13px;
     font-weight: 600;
     color: #383432;
-}
-
-.cheesecake-graphic {
-    position: absolute;
-    bottom: -80px;
-    left: 200px;
-    width: 300px;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.cheesecake-graphic img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
+    margin: 0;
 }
 
 .contact-right {
@@ -862,93 +886,199 @@ body {
     justify-content: flex-end;
 }
 
-.form-card {
+.chat-form-card {
     background: #fffdf5;
-    border-radius: 36px;
-    padding: 36px 40px;
+    border: 1.5px solid #fce3ea;
+    border-radius: 32px;
     width: 100%;
-    max-width: 460px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    max-width: 540px;
+    height: 440px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.form-header {
+.chat-card-top {
+    padding: 16px 24px;
+    border-bottom: 1px solid #fde4ec;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
 }
 
-.form-icon {
-    font-size: 28px;
-    color: #f76e8e;
+.pink-speech-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #f76e8e;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
 }
 
-.form-title {
+.chat-card-title {
     font-family: 'Playfair Display', serif;
     font-style: italic;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
-    color: #f76e8e;
+    color: #e65275;
+    margin: 0;
 }
 
-.message-form {
+.chat-stream-window {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 14px;
 }
 
-.form-group {
+.msg-chat-item {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    gap: 10px;
+    max-width: 82%;
+    align-items: flex-start;
 }
 
-.form-group label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #332d2c;
+.msg-chat-item.user-item {
+    align-self: flex-end;
+    flex-direction: row-reverse;
 }
 
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1.5px solid #f7bfd0;
-    background-color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s ease;
+.msg-chat-item.admin-item {
+    align-self: flex-start;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: #f76e8e;
-}
-
-.btn-send {
-    background-color: #f76e8e;
-    color: #ffffff;
-    border: none;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    cursor: pointer;
+.avatar-holder {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 6px;
-    box-shadow: 0 4px 14px rgba(247, 110, 142, 0.3);
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    overflow: hidden;
 }
 
-.btn-send:hover {
+.user-item .avatar-holder {
+    background-color: #ffdbe4;
+    color: #e65275;
+    border: 1px solid #fce3ea;
+}
+
+.admin-item .avatar-holder {
+    background-color: #ffffff;
+    border: 1.5px solid #f7b4c4;
+    color: #e65275;
+}
+
+.bubble-and-time {
+    display: flex;
+    flex-direction: column;
+}
+
+.msg-bubble-box {
+    padding: 12px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.user-item .msg-bubble-box {
+    background-color: #fff0f4;
+    color: #4a3431;
+    border: 1px solid #fcd5df;
+    border-top-right-radius: 4px;
+}
+
+.admin-item .msg-bubble-box {
+    background-color: #ffffff;
+    border: 1.5px solid #f9cad7;
+    color: #4a3431;
+    border-top-left-radius: 4px;
+}
+
+.timestamp-row {
+    font-size: 10px;
+    color: #a89a94;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-item .timestamp-row { justify-content: flex-end; }
+.admin-item .timestamp-row { justify-content: flex-start; }
+
+.chat-form-bottom {
+    padding: 14px 22px;
+    border-top: 1px solid #fde4ec;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+}
+
+.relative-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.clip-symbol {
+    position: absolute;
+    left: 16px;
+    color: #e65275;
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.relative-input-wrapper input {
+    width: 100%;
+    border: 1.5px solid #f3d1db;
+    border-radius: 26px;
+    padding: 10px 18px 10px 42px;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #4a3431;
+}
+
+.relative-input-wrapper input:focus {
+    border-color: #f76e8e;
+}
+
+.relative-input-wrapper input::placeholder {
+    color: #b0a5a0;
+}
+
+.round-pink-send {
+    width: 40px;
+    height: 40px;
+    background-color: #f76e8e;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.round-pink-send:hover {
     background-color: #e55a7b;
-    transform: translateY(-2px);
+    transform: scale(1.05);
 }
 
 /* =========================================
@@ -985,7 +1115,6 @@ footer.site-footer .footer-container {
     align-items: flex-start;
 }
 
-/* Col 1: Brand */
 footer.site-footer .footer-logo {
     display: flex;
     align-items: center;
@@ -1052,7 +1181,6 @@ footer.site-footer .social-circle:hover {
     color: #ffffff;
 }
 
-/* Col 2 & 3: Link Lists */
 footer.site-footer .footer-heading {
     font-size: 18px;
     font-weight: 700;
@@ -1092,7 +1220,6 @@ footer.site-footer .footer-links li a:hover {
     transform: translateX(4px);
 }
 
-/* Col 4: Newsletter */
 footer.site-footer .newsletter-desc {
     font-size: 13.5px;
     font-weight: 500;
@@ -1147,7 +1274,6 @@ footer.site-footer .newsletter-form button:hover {
     filter: brightness(1.08);
 }
 
-/* Copyright Row */
 footer.site-footer .footer-bottom {
     width: 100%;
     max-width: 1250px;
@@ -1163,7 +1289,6 @@ footer.site-footer .footer-bottom p {
     font-weight: 500;
 }
 
-/* --- REUSABLE SOLID PINK FOOTER BAR --- */
 .footer-bar,
 div.footer-bar,
 footer.footer-bar {
@@ -1398,6 +1523,14 @@ footer.footer-bar {
     .nav-item {
         font-size: 14px;
     }
+    .contact-content {
+        flex-direction: column;
+        align-items: center;
+    }
+    .contact-left, .contact-right, .chat-form-card {
+        max-width: 100%;
+        width: 100%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1407,15 +1540,6 @@ footer.footer-bar {
     }
     .bottom-photo-strip {
         height: 120px;
-    }
-    .contact-content {
-        flex-direction: column;
-    }
-    .contact-right, .form-card {
-        max-width: 100%;
-    }
-    .cheesecake-graphic {
-        display: none;
     }
     .hero-text .main-title {
         font-size: 42px;

@@ -2,16 +2,30 @@
 session_start();
 require_once 'db.php';
 
-// Handle Contact Form Submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_message'])) {
-    $name    = trim($_POST['name'] ?? '');
-    $email   = trim($_POST['email'] ?? '');
-    $message = trim($_POST['message'] ?? '');
+// Ensure table supports sender_type and user association
+$conn->query("ALTER TABLE messages ADD COLUMN IF NOT EXISTS sender_type ENUM('user', 'admin') NOT NULL DEFAULT 'user'");
+$conn->query("ALTER TABLE messages ADD COLUMN IF NOT EXISTS user_id INT NULL DEFAULT NULL");
 
-    if (!empty($name) && !empty($email) && !empty($message)) {
-        $stmt = $conn->prepare("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)");
+// Detect customer identity[cite: 10]
+$user_id    = $_SESSION['user_id'] ?? null;
+$user_email = $_SESSION['user_email'] ?? ($_SESSION['guest_chat_email'] ?? '');
+$user_name  = $_SESSION['username'] ?? ($_SESSION['guest_chat_name'] ?? '');
+
+// Handle Contact Form & Chat Message Submission[cite: 10]
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['send_message']) || isset($_POST['send_chat_message']))) {
+    $name    = trim($_POST['name'] ?? ($user_name ?: 'Customer'));
+    $email   = trim($_POST['email'] ?? ($user_email ?: 'guest@cheesecakedelight.com'));
+    $message = trim($_POST['message'] ?? ($_POST['chat_message'] ?? ''));
+
+    if (!empty($message)) {
+        $_SESSION['guest_chat_email'] = $email;
+        $_SESSION['guest_chat_name']  = $name;
+        $user_email = $email;
+        $user_name  = $name;
+
+        $stmt = $conn->prepare("INSERT INTO messages (user_id, name, email, message, sender_type) VALUES (?, ?, ?, ?, 'user')");
         if ($stmt) {
-            $stmt->bind_param("sss", $name, $email, $message);
+            $stmt->bind_param("isss", $user_id, $name, $email, $message);
             if ($stmt->execute()) {
                 $_SESSION['msg_status'] = 'success';
             } else {
@@ -29,7 +43,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_message'])) {
     exit;
 }
 
-// Fallback catalog in case database table is temporarily empty
+// Fetch Thread for Customer[cite: 10]
+$contact_thread = [];
+if (!empty($user_email)) {
+    $stmt = $conn->prepare("SELECT id, name, email, message, sender_type, created_at FROM messages WHERE email = ? ORDER BY id ASC");
+    if ($stmt) {
+        $stmt->bind_param("s", $user_email);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $contact_thread[] = $row;
+        }
+        $stmt->close();
+    }
+}
+
+// Fallback catalog in case database table is temporarily empty[cite: 10]
 $default_catalog = [
     1 => ["name" => "Strawberry Cheesecake", "desc" => "Creamy cheesecake with fresh strawberry topping.", "price" => "180.00", "image" => "images/strawberry.png.png", "stock" => 10],
     2 => ["name" => "Blueberry Cheesecake", "desc" => "Smooth cheesecake with sweet blueberry compote.", "price" => "180.00", "image" => "images/blueberry.png.png", "stock" => 8],
@@ -41,7 +70,7 @@ $default_catalog = [
     8 => ["name" => "Red Velvet Cheesecake", "desc" => "Red velvet cake with creamy cheese cake layer.", "price" => "180.00", "image" => "images/redvelvet.png", "stock" => 4]
 ];
 
-// Fetch all products dynamically from database
+// Fetch all products dynamically from database[cite: 10]
 $menu_items = [];
 $prod_query = $conn->query("SELECT id, name, description AS `desc`, price, image, stock FROM products ORDER BY id ASC");
 if ($prod_query && $prod_query->num_rows > 0) {
@@ -49,7 +78,6 @@ if ($prod_query && $prod_query->num_rows > 0) {
         $menu_items[] = $row;
     }
 } else {
-    // Fallback to defaults if table hasn't been created yet
     foreach ($default_catalog as $id => $item) {
         $item['id'] = $id;
         $menu_items[] = $item;
@@ -99,7 +127,6 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             border: 1.5px solid #f7b4c4;
         }
 
-        /* Available Stock Badge */
         .stock-badge {
             font-size: 11.5px;
             font-weight: 700;
@@ -115,7 +142,6 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             color: #e74c3c;
         }
 
-        /* Disabled state when stock is 0 */
         .btn-disabled {
             background-color: #e0b2bd !important;
             cursor: not-allowed !important;
@@ -229,7 +255,6 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                         
                         <span class="item-price">&#8369;<?php echo htmlspecialchars(number_format((float)$item['price'], 2)); ?></span>
 
-                        <!-- Dynamic Stock Status -->
                         <?php if ($available_stock > 0): ?>
                             <div class="stock-badge in-stock">&#9679; <?php echo $available_stock; ?> in stock</div>
                         <?php else: ?>
@@ -241,14 +266,12 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             <input type="hidden" name="product_id" value="<?php echo $item['id']; ?>">
 
                             <div class="action-controls-wrap">
-                                <!-- Pink Stepper Box: [- 1 +] -->
                                 <div class="stepper-box">
                                     <button type="button" class="stepper-btn" onclick="stepQty('qty_<?php echo $item['id']; ?>', -1, <?php echo $available_stock; ?>)" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>&minus;</button>
                                     <input type="number" id="qty_<?php echo $item['id']; ?>" name="quantity" value="<?php echo $available_stock > 0 ? 1 : 0; ?>" min="1" max="<?php echo $available_stock; ?>" class="stepper-input" readonly>
                                     <button type="button" class="stepper-btn" onclick="stepQty('qty_<?php echo $item['id']; ?>', 1, <?php echo $available_stock; ?>)" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>&plus;</button>
                                 </div>
 
-                                <!-- Pink Add to Cart Button -->
                                 <button type="submit" class="add-cart-pill-btn <?php echo $available_stock === 0 ? 'btn-disabled' : ''; ?>" <?php echo $available_stock === 0 ? 'disabled' : ''; ?>>
                                     Add <i class="fa-solid fa-cart-shopping"></i>
                                 </button>
@@ -339,9 +362,16 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     </section>
     <div class="footer-bar"></div>
 
+    <!-- ================= UNIFIED CONTACT US SECTION ================= -->
     <section id="contact" class="contact-section">
         <div class="contact-container">
-            <h2 class="section-title">CONTACT US</h2>
+            <div class="decor-title-box">
+                <div class="title-with-rays">
+                    <h2 class="main-contact-title">CONTACT US</h2>
+                </div>
+                <p class="script-subtitle">We'd love to hear from you!</p>
+            </div>
+
             <div class="contact-content">
                 <div class="contact-left">
                     <div class="info-list">
@@ -357,7 +387,7 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             <div class="icon-circle"><i class="fa-solid fa-phone"></i></div>
                             <div class="info-details">
                                 <h3>Call Us</h3>
-                                <p>+63 675 345 7256</p>
+                                <p>+63 875 945 7256</p>
                             </div>
                         </div>
 
@@ -377,52 +407,68 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             </div>
                         </div>
                     </div>
-
-                    <div class="cheesecake-graphic"></div>
                 </div>
 
                 <div class="contact-right">
-                    <div class="form-card">
-                        <div class="form-header">
-                            <i class="fa-regular fa-envelope form-icon"></i>
-                            <h3 class="form-title">Send Us a Message</h3>
+                    <div class="chat-form-card">
+                        <div class="chat-card-top">
+                            <div class="pink-speech-icon">
+                                <i class="fa-solid fa-comment-dots"></i>
+                            </div>
+                            <h3 class="chat-card-title">Your Message</h3>
                         </div>
 
-                        <?php if (isset($_SESSION['msg_status'])): ?>
-                            <?php if ($_SESSION['msg_status'] === 'success'): ?>
-                                <div class="form-feedback success">
-                                    <i class="fa-solid fa-circle-check"></i> Thank you! Your message has been sent successfully.
-                                </div>
-                            <?php elseif ($_SESSION['msg_status'] === 'error'): ?>
-                                <div class="form-feedback error">
-                                    <i class="fa-solid fa-circle-exclamation"></i> Unable to save message. Please try again.
+                        <div class="chat-stream-window" id="mainChatScroll">
+                            <?php if (empty($contact_thread)): ?>
+                                <div style="text-align: center; margin: auto; color: #8c7b74; padding: 20px;">
+                                    <i class="fa-regular fa-paper-plane" style="font-size: 28px; color: #f76e8e; margin-bottom: 6px;"></i>
+                                    <p style="font-weight: 700; color: #e65275; font-size: 13.5px;">Have a question?</p>
+                                    <p style="font-size: 12px; margin-top: 3px;">Type your message below. Admin replies will appear right here!</p>
                                 </div>
                             <?php else: ?>
-                                <div class="form-feedback error">
-                                    <i class="fa-solid fa-circle-exclamation"></i> Please fill in all fields.
-                                </div>
+                                <?php foreach ($contact_thread as $msg): 
+                                    $is_admin = ($msg['sender_type'] === 'admin');
+                                ?>
+                                    <div class="msg-chat-item <?php echo $is_admin ? 'admin-item' : 'user-item'; ?>">
+                                        <div class="avatar-holder">
+                                            <?php if ($is_admin): ?>
+                                                <img src="images/cheesecakeLogo.png" alt="Admin" style="width: 80%; height: 80%; object-fit: contain;">
+                                            <?php else: ?>
+                                                <i class="fa-solid fa-user"></i>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div class="bubble-and-time">
+                                            <div class="msg-bubble-box">
+                                                <?php echo nl2br(htmlspecialchars($msg['message'])); ?>
+                                            </div>
+                                            <div class="timestamp-row">
+                                                <span><?php echo date('h:i A', strtotime($msg['created_at'] ?? 'now')); ?></span>
+                                                <?php if (!$is_admin): ?>
+                                                    <i class="fa-solid fa-check-double" style="font-size: 8.5px; color: #f76e8e;"></i>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
                             <?php endif; ?>
-                            <?php unset($_SESSION['msg_status']); ?>
-                        <?php endif; ?>
+                        </div>
 
-                        <form method="POST" action="Index.php#contact" class="message-form">
-                            <div class="form-group">
-                                <label for="name">Your Name</label>
-                                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+                        <form method="POST" action="Index.php#contact" class="chat-form-bottom">
+                            <?php if (empty($user_email)): ?>
+                                <input type="hidden" name="name" value="Guest Customer">
+                                <input type="hidden" name="email" value="guest_<?php echo substr(session_id(), 0, 8); ?>@cheesecake.com">
+                            <?php else: ?>
+                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($user_name ?: 'Customer'); ?>">
+                                <input type="hidden" name="email" value="<?php echo htmlspecialchars($user_email); ?>">
+                            <?php endif; ?>
+
+                            <div class="relative-input-wrapper">
+                                <i class="fa-solid fa-paperclip clip-symbol"></i>
+                                <input type="text" name="message" placeholder="Type your message..." required autocomplete="off">
                             </div>
-
-                            <div class="form-group">
-                                <label for="email">Your Email</label>
-                                <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" rows="4" placeholder="Type your message..." required></textarea>
-                            </div>
-
-                            <button type="submit" name="send_message" class="btn-send">
-                                <i class="fa-regular fa-paper-plane"></i> SEND MESSAGE
+                            <button type="submit" name="send_message" class="round-pink-send" title="Send message">
+                                <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </form>
                     </div>
@@ -502,6 +548,11 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             let val = parseInt(input.value) || 1;
             val = Math.max(1, Math.min(maxStock, val + delta));
             input.value = val;
+        }
+
+        const chatScroll = document.getElementById('mainChatScroll');
+        if (chatScroll) {
+            chatScroll.scrollTop = chatScroll.scrollHeight;
         }
     </script>
 </body>
